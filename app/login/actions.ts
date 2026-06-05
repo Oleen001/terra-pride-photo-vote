@@ -48,7 +48,7 @@ export async function loginAction(
     } catch (err) {
       console.error("sendOtpEmail failed:", err);
       // In dev, fall back to logging the code so login can be tested even if
-      // SMTP isn't configured yet. In production a send failure is a hard error.
+      // email isn't configured yet. In production a send failure is a hard error.
       if (isDev) {
         console.log(`\n  🔑 [DEV] OTP for ${email}: ${code}\n`);
       } else {
