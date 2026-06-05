@@ -1,6 +1,11 @@
 import "server-only";
+import { setDefaultResultOrder } from "node:dns";
 import nodemailer from "nodemailer";
 import { env } from "@/lib/env";
+
+// Some hosts (e.g. Render) have no IPv6 route to Gmail. Node otherwise prefers
+// AAAA records → ENETUNREACH/timeout on SMTP connect. Prefer IPv4 process-wide.
+setDefaultResultOrder("ipv4first");
 import { logEmail, countSentLast24h } from "@/lib/email-log";
 
 // Stay safely under Gmail's ~500/day cap; switch to the next account at this point.
@@ -16,7 +21,6 @@ const transporters = env.smtpAccounts.map((acc) => ({
     port: env.smtpPort,
     secure: env.smtpPort === 465, // 465 = implicit TLS; 587 = STARTTLS
     auth: { user: acc.user, pass: acc.pass },
-    family: 4, // force IPv4 — some hosts (e.g. Render) have no IPv6 route to Gmail
     connectionTimeout: 10_000, // fail fast instead of hanging on an unreachable route
     greetingTimeout: 10_000,
     socketTimeout: 20_000,
