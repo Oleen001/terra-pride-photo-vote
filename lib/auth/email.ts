@@ -16,6 +16,10 @@ const transporters = env.smtpAccounts.map((acc) => ({
     port: env.smtpPort,
     secure: env.smtpPort === 465, // 465 = implicit TLS; 587 = STARTTLS
     auth: { user: acc.user, pass: acc.pass },
+    family: 4, // force IPv4 — some hosts (e.g. Render) have no IPv6 route to Gmail
+    connectionTimeout: 10_000, // fail fast instead of hanging on an unreachable route
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   }),
 }));
 
