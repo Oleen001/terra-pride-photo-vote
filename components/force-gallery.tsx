@@ -262,9 +262,9 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     // while photos keep a modest charge. forceManyBody reads strength via this
     // accessor only at (re)initialization, so we re-apply the force whenever the
     // text radius changes (see applyText) to grow/shrink the field live.
-    const CHARGE_K = 17; // text strength ≈ -(r * K); tuned so a full phrase clears a wide ring
-    const PHOTO_CHARGE = -52;
-    const MAX_TEXT_CHARGE = -2600; // bound magnitude so nodes never explode / NaN
+    const CHARGE_K = 9; // text strength ≈ -(r * K); tuned so the ring stays tight, not far-flung
+    const PHOTO_CHARGE = -40;
+    const MAX_TEXT_CHARGE = -1300; // bound magnitude so nodes never explode / NaN
     const chargeStrength = (d: ForceNode) =>
       d.isText ? Math.max(MAX_TEXT_CHARGE, -(d.r * CHARGE_K)) : PHOTO_CHARGE;
 
@@ -273,7 +273,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
         "charge",
         forceManyBody<ForceNode>()
           .strength(chargeStrength)
-          .distanceMax(Math.max(w, h) * 0.75), // clamp range so it can't shove photos off-canvas forever
+          .distanceMax(Math.max(w, h) * 0.5), // clamp range so it can't shove photos off-canvas forever
       )
       .force("center", forceCenter(w / 2, h / 2))
       // live radius read each tick so the growing text node carves out space;
@@ -285,8 +285,8 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
           .strength(0.95)
           .iterations(3),
       )
-      .force("x", forceX(w / 2).strength(0.022))
-      .force("y", forceY(h / 2).strength(0.022))
+      .force("x", forceX(w / 2).strength(0.07))
+      .force("y", forceY(h / 2).strength(0.07))
       .on("tick", () => {
         // ease entrance scale-in
         for (const n of nodesRef.current) {
@@ -344,7 +344,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
             "charge",
             forceManyBody<ForceNode>()
               .strength(chargeStrength)
-              .distanceMax(Math.max(sizeRef.current.w, sizeRef.current.h) * 0.75),
+              .distanceMax(Math.max(sizeRef.current.w, sizeRef.current.h) * 0.5),
           );
           reheat(0.5);
         }
@@ -461,13 +461,13 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       setSize();
       const { w, h } = sizeRef.current;
       sim.force("center", forceCenter(w / 2, h / 2));
-      sim.force("x", forceX(w / 2).strength(0.022));
-      sim.force("y", forceY(h / 2).strength(0.022));
+      sim.force("x", forceX(w / 2).strength(0.07));
+      sim.force("y", forceY(h / 2).strength(0.07));
       sim.force(
         "charge",
         forceManyBody<ForceNode>()
           .strength(chargeStrength)
-          .distanceMax(Math.max(w, h) * 0.75),
+          .distanceMax(Math.max(w, h) * 0.5),
       );
       textNode.fx = w / 2;
       textNode.fy = h / 2;
