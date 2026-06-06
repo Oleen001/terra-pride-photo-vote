@@ -20,16 +20,29 @@ export default async function Home() {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12">
-      <div className="mb-8 flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Gallery
-        </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          {settings.votingOpen
-            ? "เลือกรูปที่คุณชอบ แล้วกดโหวตได้เลย"
-            : "ชมภาพถ่ายทั้งหมดจากผู้เข้าร่วม"}
-        </p>
+    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-7 sm:px-8 sm:py-10">
+      <div className="mb-6 flex flex-col gap-4 border-b border-line/80 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-accent">
+            Private Photo Vote
+          </p>
+          <h1 className="font-display text-3xl font-semibold tracking-normal text-foreground sm:text-4xl">
+            Gallery
+          </h1>
+          <p className="max-w-xl text-sm leading-6 text-muted">
+            {settings.votingOpen
+              ? "เลือกรูปที่คุณชอบ แล้วกดโหวตได้เลย"
+              : "ชมภาพถ่ายทั้งหมดจากผู้เข้าร่วม"}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-medium">
+          <span className="rounded-full border border-line bg-surface px-3 py-1.5 text-muted shadow-sm">
+            {photos.length.toLocaleString()} photos
+          </span>
+          <span className="rounded-full border border-line bg-surface px-3 py-1.5 text-muted shadow-sm">
+            {settings.votingOpen ? "Voting open" : "Viewing only"}
+          </span>
+        </div>
       </div>
 
       <Gallery

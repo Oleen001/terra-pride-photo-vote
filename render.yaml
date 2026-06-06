@@ -19,10 +19,6 @@ services:
         value: "--max-old-space-size=460"
       - key: SUPABASE_PHOTOS_BUCKET
         value: photos
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: "465"
       - key: MAIL_FROM_NAME
         value: Terra Pride
       # Secrets — set these in the Render dashboard (Environment tab):
@@ -30,7 +26,9 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: SMTP_ACCOUNTS
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM_EMAIL
         sync: false
       - key: SESSION_SECRET
         sync: false

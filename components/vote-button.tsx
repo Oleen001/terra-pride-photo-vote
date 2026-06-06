@@ -34,7 +34,7 @@ export function VoteButton({
       <a
         href="/login"
         onClick={(e) => e.stopPropagation()}
-        className={`inline-flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white/90 font-medium text-zinc-700 backdrop-blur transition-colors duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:text-white ${pad}`}
+        className={`inline-flex cursor-pointer items-center gap-2 rounded-full border border-line bg-surface/92 font-medium text-foreground shadow-sm backdrop-blur transition duration-200 hover:-translate-y-px hover:border-foreground/20 ${pad}`}
       >
         <HeartIcon className={iconSize} />
         Sign in to vote
@@ -48,7 +48,7 @@ export function VoteButton({
       <span
         onClick={(e) => e.stopPropagation()}
         title="คุณโหวตรูปของตัวเองโดยอัตโนมัติ (ยกเลิกไม่ได้)"
-        className={`inline-flex cursor-default items-center gap-2 rounded-full bg-rose-500/90 font-medium text-white ${pad}`}
+        className={`inline-flex cursor-default items-center gap-2 rounded-full bg-accent font-medium text-white shadow-sm ${pad}`}
       >
         <HeartIcon className={iconSize} filled />
         <LockIcon className={lg ? "h-4 w-4" : "h-3.5 w-3.5"} />
@@ -62,7 +62,7 @@ export function VoteButton({
       <span
         onClick={(e) => e.stopPropagation()}
         title="ขณะนี้ปิดการโหวต"
-        className={`inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-zinc-200 bg-white/80 font-medium text-zinc-400 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-600 ${pad}`}
+        className={`inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-line bg-surface/80 font-medium text-muted/55 backdrop-blur ${pad}`}
       >
         <HeartIcon className={iconSize} filled={voted} />
         {voted ? "Voted" : "Voting closed"}
@@ -82,8 +82,8 @@ export function VoteButton({
       whileTap={reduce ? undefined : { scale: 0.92 }}
       className={`inline-flex cursor-pointer items-center gap-2 rounded-full font-medium backdrop-blur transition-colors duration-200 disabled:opacity-70 ${pad} ${
         voted
-          ? "bg-rose-500 text-white hover:bg-rose-600"
-          : "border border-zinc-200 bg-white/90 text-zinc-700 hover:border-rose-300 hover:text-rose-600 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:border-rose-500/60 dark:hover:text-rose-400"
+          ? "bg-accent text-white shadow-sm hover:bg-accent/90"
+          : "border border-line bg-surface/92 text-foreground shadow-sm hover:-translate-y-px hover:border-accent/40 hover:text-accent"
       }`}
       aria-pressed={voted}
       aria-label={voted ? "Remove vote" : "Vote for this photo"}
