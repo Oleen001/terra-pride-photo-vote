@@ -60,256 +60,267 @@ body::before {
   background: color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
-.trace-card-three {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  opacity: 0.94;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
-  transition: opacity 240ms ease;
-}
-
-.trace-card:hover .trace-card-three,
-.trace-card:focus-within .trace-card-three {
-  opacity: 1;
-}
-
-.photo-carousel {
+.gallery-board {
+  --cursor-x: 50%;
+  --cursor-y: 42%;
+  --focus-x: 50%;
+  --focus-y: 50%;
   overflow: hidden;
   position: relative;
   margin-inline: calc(50% - 50vw);
-  padding: 18px max(16px, calc(50vw - 664px)) 30px;
-  touch-action: pan-y;
-  user-select: none;
+  min-height: max(1120px, calc(158svh - 4rem));
+  background:
+    radial-gradient(circle at 24% 18%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 28%),
+    radial-gradient(circle at 82% 64%, color-mix(in srgb, var(--accent-2) 9%, transparent), transparent 30%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.1) 0 1.35px, transparent 1.7px),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 96%, black), #080708);
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0;
+  background-size:
+    auto,
+    auto,
+    18px 18px,
+    auto;
 }
 
-.photo-carousel-stage {
-  position: relative;
-  min-height: clamp(440px, 46vw, 580px);
-  perspective: 1300px;
-  transform-style: preserve-3d;
-}
-
-.carousel-card {
-  --carousel-x: 0px;
-  --carousel-z: 0px;
-  --carousel-ry: 0deg;
-  --carousel-rz: 0deg;
-  --carousel-scale: 1;
-  --carousel-opacity: 1;
-  --card-rx: 0deg;
-  --card-ry: 0deg;
-  cursor: grab;
+.gallery-board::before {
+  pointer-events: none;
+  content: "";
   position: absolute;
-  top: 50%;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.82) 0 1.45px, transparent 1.8px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(
+    circle at var(--cursor-x) var(--cursor-y),
+    black 0,
+    rgba(0, 0, 0, 0.8) 56px,
+    rgba(0, 0, 0, 0.34) 120px,
+    transparent 250px
+  );
+  opacity: 0.82;
+}
+
+.gallery-board-canvas {
+  position: absolute;
+  inset: 0;
+  min-width: 100%;
+  min-height: 100%;
+  transform-origin: var(--focus-x) var(--focus-y);
+  transition: transform 640ms cubic-bezier(0.21, 0.47, 0.32, 0.98);
+}
+
+.gallery-board.is-zoomed .gallery-board-canvas {
+  transform: none;
+}
+
+.board-zoom-out {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  top: calc(4rem + max(18px, env(safe-area-inset-top)));
+  z-index: 60;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  cursor: zoom-out;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(15, 13, 15, 0.72);
+  color: white;
+  font-size: 26px;
+  line-height: 1;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(16px);
+}
+
+.board-photo {
+  --board-x: 0%;
+  --board-y: 0%;
+  --board-w: 20%;
+  --board-r: 0deg;
+  --hold-progress: 0;
+  --scroll-shift: 0px;
+  --float-delay: 0s;
+  --float-duration: 6s;
+  cursor: zoom-in;
+  position: absolute;
+  left: var(--board-x);
+  top: var(--board-y);
+  width: max(170px, var(--board-w));
+  aspect-ratio: 1 / 1.18;
+  animation: board-card-drift var(--float-duration) ease-in-out infinite;
+  animation-delay: var(--float-delay);
+  transform: translate3d(0, var(--scroll-shift), 0) rotate(var(--board-r));
+  transform-origin: center;
+  transition: transform 480ms cubic-bezier(0.21, 0.47, 0.32, 0.98);
+}
+
+.board-photo.is-selected {
+  animation: none;
+  cursor: zoom-out;
+  position: fixed;
   left: 50%;
-  width: min(74vw, 500px);
-  aspect-ratio: 1 / 1.02;
-  opacity: var(--carousel-opacity);
-  transform:
-    translate(-50%, -50%)
-    translate3d(var(--carousel-x), 0, var(--carousel-z))
-    rotateY(var(--carousel-ry))
-    rotateZ(var(--carousel-rz))
-    scale(var(--carousel-scale));
-  transform-style: preserve-3d;
-  transition:
-    opacity 500ms ease,
-    transform 700ms cubic-bezier(0.21, 0.47, 0.32, 0.98);
+  top: 50%;
+  width: min(76vw, 720px);
+  z-index: 55 !important;
+  transform: translate(-50%, -50%) rotate(0deg);
 }
 
-.carousel-card:active {
-  cursor: grabbing;
-}
-
-.carousel-card-shell {
+.board-photo-shell {
   overflow: hidden;
   position: relative;
   height: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(9, 122, 114, 0.2), transparent 32%),
-    linear-gradient(145deg, #242c32, #121212 72%);
+  background: linear-gradient(145deg, #242c32, #121212 72%);
   box-shadow:
-    0 50px 110px rgba(0, 0, 0, 0.62),
+    0 26px 70px rgba(0, 0, 0, 0.46),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transform:
-    rotateX(var(--card-rx))
-    rotateY(var(--card-ry));
-  transform-style: preserve-3d;
-  transition: transform 220ms cubic-bezier(0.21, 0.47, 0.32, 0.98);
+  transition:
+    transform 220ms ease,
+    box-shadow 260ms ease;
 }
 
-/* Specular sheen that follows the pointer as the card tilts. */
-.carousel-card-shell::after {
-  content: "";
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: radial-gradient(
-    260px circle at var(--glare-x, 50%) var(--glare-y, 28%),
-    rgba(255, 255, 255, 0.22),
-    transparent 58%
-  );
-  opacity: 0;
-  mix-blend-mode: soft-light;
-  transition: opacity 260ms ease;
+.board-photo:not(.is-selected):hover .board-photo-shell {
+  transform: translateY(-4px) scale(1.02);
 }
 
-.carousel-card:hover .carousel-card-shell::after {
-  opacity: 1;
+.board-photo.is-charging .board-photo-shell {
+  animation: card-crack-shake 95ms infinite linear;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.56),
+    0 0 0 1px rgba(244, 63, 107, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.carousel-card-image {
+.board-photo-image {
   object-fit: cover;
-  opacity: 1;
-  filter: saturate(1.02) contrast(1.02);
+  filter: saturate(1.04) contrast(1.02);
   transform: scale(1.02);
 }
 
-.carousel-card-shade {
+.board-photo-shade {
   pointer-events: none;
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(
-    180deg,
-    transparent 36%,
-    rgba(0, 0, 0, 0.5) 66%,
-    rgba(0, 0, 0, 0.86) 100%
-  );
+  background:
+    linear-gradient(180deg, transparent 34%, rgba(0, 0, 0, 0.48) 66%, rgba(0, 0, 0, 0.88) 100%),
+    radial-gradient(circle at 50% 50%, transparent, rgba(0, 0, 0, 0.3));
 }
 
-.carousel-card-copy {
+.board-photo-copy {
   position: absolute;
-  left: clamp(16px, 4vw, 28px);
-  right: clamp(16px, 4vw, 28px);
-  bottom: clamp(60px, 7.5vw, 74px);
+  left: 14px;
+  right: 64px;
+  bottom: 16px;
   z-index: 3;
-  transform: translateZ(38px);
 }
 
-.carousel-card-copy h2 {
+.board-photo-copy h2 {
   overflow: hidden;
-  max-width: 100%;
-  color: #ffffff;
-  font-size: clamp(18px, 2.8vw, 24px);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  color: white;
+  font-size: clamp(12px, 1.25vw, 18px);
+  font-weight: 800;
+  letter-spacing: 0;
   line-height: 1.1;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.carousel-card-copy p {
-  display: -webkit-box;
+.board-photo-copy p {
   overflow: hidden;
-  margin-top: 6px;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: clamp(12px, 1.5vw, 14px);
-  font-weight: 400;
-  line-height: 1.4;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: clamp(9px, 0.9vw, 11px);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.carousel-card-action {
+.board-like-slot {
   position: absolute;
-  left: clamp(16px, 4vw, 28px);
-  right: clamp(16px, 4vw, 28px);
-  bottom: clamp(14px, 3vw, 18px);
+  right: 12px;
+  bottom: 12px;
   z-index: 5;
-  transform: translateZ(48px);
 }
 
-.carousel-like {
+.three-heart-button {
+  --heart-progress: 0;
   position: relative;
-  display: flex;
-  width: 100%;
-  height: 42px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 999px;
-  padding: 0 18px;
-  border: none;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.carousel-like-hold {
-  --hold-progress: 0;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
   cursor: pointer;
-  overflow: hidden;
-  background: #ffffff;
-  color: #161616;
+  touch-action: none;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 62%),
+    rgba(18, 16, 18, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 28px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(14px);
+  isolation: isolate;
 }
 
-.carousel-like-hold::before {
+.three-heart-button::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, #e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982);
-  opacity: 0.85;
-  transform: scaleX(var(--hold-progress));
-  transform-origin: left;
-  transition: transform 90ms linear;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(#e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982, #e40303);
+  opacity: max(0.5, calc(var(--heart-progress) * 0.95));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
-.carousel-like-hold > * {
+.three-heart-button:disabled {
+  cursor: default;
+}
+
+.three-heart-button.is-liked {
+  border-color: rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 0 16px rgba(255, 79, 154, 0.34),
+    0 10px 28px rgba(0, 0, 0, 0.34);
+}
+
+.heart-svg {
   position: relative;
   z-index: 1;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
 }
 
-.carousel-like-heart {
-  font-size: 16px;
-  line-height: 1;
-  color: #d92d62;
+.heart-burst {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 8;
 }
 
-.carousel-like-liked {
-  background: var(--accent);
-  color: white;
-}
-
-.carousel-like-liked .carousel-like-heart {
-  color: #ffffff;
-}
-
-.carousel-like-idle,
-.carousel-like-disabled {
-  background: rgba(255, 255, 255, 0.92);
-  color: #161616;
-}
-
-.carousel-like-disabled {
-  opacity: 0.7;
-}
-
-.carousel-dots {
-  display: flex;
-  justify-content: center;
-  gap: 7px;
-  margin-top: -16px;
-}
-
-.carousel-dots span {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--foreground) 18%, transparent);
-  transition:
-    background 180ms ease,
-    transform 180ms ease;
-}
-
-.carousel-dots .is-active {
-  background: var(--accent);
-  transform: scale(1.45);
+.heart-burst span {
+  --i: 0;
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  color: hsl(calc(var(--i) * 22deg) 92% 62%);
+  font-size: 20px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.34));
+  animation: heart-burst 980ms ease-out forwards;
+  transform: translate(-50%, -50%);
 }
 
 @keyframes pride-splash {
@@ -323,27 +334,83 @@ body::before {
   }
 }
 
+@keyframes card-crack-shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(1px, -1px) rotate(-0.35deg); }
+  50% { transform: translate(-1px, 1px) rotate(0.35deg); }
+  75% { transform: translate(1px, 1px) rotate(0.2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes board-card-drift {
+  0% {
+    transform: translate3d(0, var(--scroll-shift), 0) rotate(var(--board-r));
+  }
+  45% {
+    transform: translate3d(0, calc(var(--scroll-shift) - 7px), 0) rotate(calc(var(--board-r) + 0.45deg));
+  }
+  100% {
+    transform: translate3d(0, var(--scroll-shift), 0) rotate(var(--board-r));
+  }
+}
+
+@keyframes heart-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%)
+      rotate(calc(var(--i) * 20deg))
+      translateY(-180px)
+      scale(1.7)
+      rotate(calc(var(--i) * 20deg));
+  }
+}
+
 @media (max-width: 640px) {
-  .photo-carousel {
-    padding-top: 0;
+  .gallery-board {
+    min-height: max(1120px, calc(150svh - 4rem));
+    background-size:
+      auto,
+      auto,
+      20px 20px,
+      auto;
   }
 
-  .photo-carousel-stage {
-    min-height: 620px;
+  .gallery-board::before {
+    background-size: 20px 20px;
   }
 
-  .carousel-card {
-    width: min(82vw, 360px);
-    aspect-ratio: 0.78 / 1;
+  .gallery-board.is-zoomed .gallery-board-canvas {
+    transform: none;
   }
 
-  .carousel-card-copy {
-    bottom: 86px;
+  .board-photo {
+    width: max(118px, calc(var(--board-w) * 1.3));
   }
 
-  .carousel-card-action {
-    left: 20px;
-    right: 20px;
+  .board-photo.is-selected {
+    width: 92vw;
+  }
+
+  .board-photo-copy {
+    right: 58px;
+  }
+
+  .board-photo-copy h2 {
+    font-size: clamp(11px, 3.4vw, 16px);
+  }
+
+  .board-photo-copy p {
+    font-size: clamp(9px, 2.7vw, 10px);
+  }
+
+  .three-heart-button {
+    width: 44px;
+    height: 44px;
   }
 }
 

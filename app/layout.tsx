@@ -23,6 +23,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Terra Pride — Photo Vote",
   description: "A private photo gallery and voting space for Terra Pride.",
+  icons: {
+    icon: "/terra-logo-mark.png",
+    apple: "/terra-logo-mark.png",
+  },
 };
 
 export default function RootLayout({
