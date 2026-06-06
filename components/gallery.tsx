@@ -295,6 +295,17 @@ export function Gallery({
     [photos, activeId],
   );
 
+  const votableTotal = useMemo(
+    () => photos.filter((p) => p.ownerUserId !== currentUserId).length,
+    [photos, currentUserId],
+  );
+  const votedCount = useMemo(
+    () => photos.filter((p) => p.ownerUserId !== currentUserId && votedIds.has(p.id)).length,
+    [photos, currentUserId, votedIds],
+  );
+  const ambientSrc =
+    photos[activeIndex]?.thumbnailUrl ?? photos[activeIndex]?.imageUrl ?? null;
+
   if (photos.length === 0) {
     return (
       <div className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center gap-4 px-6 py-28 text-center">
@@ -313,6 +324,27 @@ export function Gallery({
 
   return (
     <>
+      <div className="carousel-ambient" aria-hidden="true">
+        {ambientSrc && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={ambientSrc} src={ambientSrc} alt="" className="carousel-ambient-img" />
+        )}
+      </div>
+
+      {loggedIn && votingOpen && votableTotal > 0 && (
+        <div className="vote-progress">
+          <span className="vote-progress-label">
+            โหวตแล้ว {votedCount}/{votableTotal} รูป
+          </span>
+          <div className="vote-progress-track">
+            <div
+              className="vote-progress-fill"
+              style={{ width: `${(votedCount / votableTotal) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       <section
         className="photo-carousel"
         onPointerDown={(event) => {
