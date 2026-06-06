@@ -14,8 +14,22 @@ export type PhotoRow = {
   updated_at: string;
 };
 
-/** Gallery card shape. NOTE: never carries a vote count. */
+/**
+ * Gallery card shape. NOTE: never carries a vote count, and never the raw
+ * owner email — only a derived display name. ownerUserId is kept for owner checks.
+ */
 export type GalleryPhoto = {
+  id: string;
+  imageUrl: string;
+  thumbnailUrl: string | null;
+  caption: string;
+  ownerUserId: string;
+  uploaderName: string;
+  createdAt: string;
+};
+
+/** Admin list row — includes deleted flag + vote count + raw owner email. */
+export type AdminPhoto = {
   id: string;
   imageUrl: string;
   thumbnailUrl: string | null;
@@ -23,10 +37,6 @@ export type GalleryPhoto = {
   ownerUserId: string;
   ownerEmail: string;
   createdAt: string;
-};
-
-/** Admin list row — includes deleted flag + vote count. */
-export type AdminPhoto = GalleryPhoto & {
   isDeleted: boolean;
   deletedAt: string | null;
   voteCount: number;
@@ -54,6 +64,16 @@ function ownerEmailOf(row: JoinedRow): string {
 }
 
 /**
+ * Derive a public display name from an email local-part: take the part before
+ * "@", replace runs of [._-] with spaces, and trim. Used so the public gallery
+ * never leaks raw emails. Falls back to "" when no email is present.
+ */
+function displayNameFromEmail(email: string): string {
+  const local = email.split("@")[0] ?? "";
+  return local.replace(/[._-]+/g, " ").trim();
+}
+
+/**
  * Active photos for the public gallery, newest first.
  * MUST NOT expose vote counts.
  */
@@ -72,7 +92,7 @@ export async function listActivePhotos(): Promise<GalleryPhoto[]> {
     thumbnailUrl: r.thumbnail_url,
     caption: r.caption,
     ownerUserId: r.owner_user_id,
-    ownerEmail: ownerEmailOf(r),
+    uploaderName: displayNameFromEmail(ownerEmailOf(r)),
     createdAt: r.created_at,
   }));
 }

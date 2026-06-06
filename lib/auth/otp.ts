@@ -31,11 +31,14 @@ export async function createOtp(email: string): Promise<string> {
   const normalized = normalizeEmail(email);
   const now = new Date();
 
-  // Rate-limit: reject if a code was issued for this email very recently.
+  // Rate-limit: reject if an *unused* code was issued for this email very
+  // recently. We scope to used_at IS NULL so a code that was already consumed
+  // by a successful login doesn't block a legitimate immediate re-request.
   const { data: recent } = await db
     .from("otp_codes")
     .select("created_at")
     .eq("email", normalized)
+    .is("used_at", null)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

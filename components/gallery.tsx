@@ -15,7 +15,7 @@ import { ImageIcon } from "@/components/icons";
 import { ThreeHeartButton } from "@/components/three-heart-button";
 import { ForceGallery } from "@/components/force-gallery";
 import { unvoteAction, voteAction } from "@/app/actions/vote";
-import { getActivePhotosAction } from "@/app/actions/photos";
+import { deleteOwnPhotoAction, getActivePhotosAction } from "@/app/actions/photos";
 
 type GalleryProps = {
   photos: GalleryPhoto[];
@@ -60,10 +60,44 @@ function createBoardLayouts(count: number) {
   });
 }
 
-function uploaderName(email: string) {
-  const name = email.split("@")[0] ?? email;
-  return name.replace(/[._-]+/g, " ").trim() || name;
-}
+const ownerActionsStyle: CSSProperties = {
+  position: "absolute",
+  bottom: 12,
+  right: 12,
+  display: "flex",
+  gap: 8,
+  zIndex: 4,
+};
+
+const deleteButtonStyle: CSSProperties = {
+  appearance: "none",
+  border: "1px solid rgba(244,63,107,0.55)",
+  background: "rgba(27,24,27,0.78)",
+  backdropFilter: "blur(6px)",
+  color: "#ff7d9c",
+  fontSize: 13,
+  fontWeight: 600,
+  lineHeight: 1,
+  padding: "8px 12px",
+  minHeight: 36,
+  borderRadius: 8,
+  cursor: "pointer",
+  transition: "background 180ms ease-out, color 180ms ease-out, border-color 180ms ease-out",
+};
+
+const deleteConfirmStyle: CSSProperties = {
+  ...deleteButtonStyle,
+  border: "1px solid #f43f6b",
+  background: "#f43f6b",
+  color: "#fff",
+};
+
+const deleteCancelStyle: CSSProperties = {
+  ...deleteButtonStyle,
+  border: "1px solid var(--line, #2c282c)",
+  background: "rgba(27,24,27,0.78)",
+  color: "var(--muted, #9b938f)",
+};
 
 export function Gallery({
   photos: initialPhotos,
@@ -75,24 +109,54 @@ export function Gallery({
   const [photos, setPhotos] = useState(initialPhotos);
   const [view, setView] = useState<"board" | "graph">("board");
 
+  // Stable layout slot per photo id: a photo keeps the slot it was first seen with,
+  // so the 8s poll (which prepends newest-first) never teleports existing cards.
+  // The slot map is grown only inside the same updater that changes `photos`
+  // (event-driven, not in render), so order changes don't reshuffle the board.
+  const [slotMap, setSlotMap] = useState<Map<string, number>>(() => {
+    const map = new Map<string, number>();
+    initialPhotos.forEach((p, i) => map.set(p.id, i));
+    return map;
+  });
+  const ensureSlots = useCallback((list: GalleryPhoto[]) => {
+    setSlotMap((prev) => {
+      let next: Map<string, number> | null = null;
+      let count = prev.size;
+      for (const photo of list) {
+        if (!prev.has(photo.id)) {
+          if (!next) next = new Map(prev);
+          next.set(photo.id, count);
+          count += 1;
+        }
+      }
+      return next ?? prev;
+    });
+  }, []);
+
   // Live polling: pull active photos every 8s so new uploads appear without a
   // manual refresh (for the event TV). Only updates state when the set changed.
   useEffect(() => {
     const timer = window.setInterval(async () => {
       try {
         const fresh = await getActivePhotosAction();
+        let changed = false;
         setPhotos((prev) => {
-          if (fresh.length === prev.length && fresh.every((p, i) => p.id === prev[i]?.id)) {
-            return prev;
+          if (fresh.length === prev.length) {
+            const prevIds = new Set(prev.map((p) => p.id));
+            if (fresh.every((p) => prevIds.has(p.id))) {
+              return prev;
+            }
           }
+          changed = true;
           return fresh;
         });
+        if (changed) ensureSlots(fresh);
       } catch {
         /* ignore transient poll errors */
       }
     }, 8000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [ensureSlots]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(() => new Set(initialVotedIds));
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
@@ -100,6 +164,14 @@ export function Gallery({
   const boardRef = useRef<HTMLElement | null>(null);
   const [scrollShift, setScrollShift] = useState(0);
   const boardLayouts = useMemo(() => createBoardLayouts(photos.length), [photos.length]);
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const selectPhoto = useCallback((id: string | null) => {
+    setConfirmDeleteId(null);
+    setSelectedId(id);
+  }, []);
 
   const selectedPhoto = useMemo(
     () => photos.find((photo) => photo.id === selectedId) ?? null,
@@ -218,6 +290,40 @@ export function Gallery({
     [isOwner, loggedIn, pendingIds, votedIds, votingOpen],
   );
 
+  const handleDelete = useCallback(
+    (photo: GalleryPhoto) => {
+      const id = photo.id;
+      if (deletingId) return;
+      setDeletingId(id);
+
+      let removed: GalleryPhoto[] = [];
+      setPhotos((prev) => {
+        removed = prev;
+        return prev.filter((p) => p.id !== id);
+      });
+      setSelectedId((current) => (current === id ? null : current));
+      setConfirmDeleteId(null);
+
+      deleteOwnPhotoAction(id)
+        .then((res) => {
+          if (!res.ok) {
+            setPhotos((prev) =>
+              prev.some((p) => p.id === id) ? prev : removed,
+            );
+          }
+        })
+        .catch(() => {
+          setPhotos((prev) =>
+            prev.some((p) => p.id === id) ? prev : removed,
+          );
+        })
+        .finally(() => {
+          setDeletingId((current) => (current === id ? null : current));
+        });
+    },
+    [deletingId],
+  );
+
   if (photos.length === 0) {
     return (
       <div className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center gap-4 px-6 py-28 text-center">
@@ -269,7 +375,7 @@ export function Gallery({
           photos={photos}
           votedIds={votedIds}
           isOwner={isOwner}
-          onSelect={(p) => setSelectedId(p.id)}
+          onSelect={(p) => selectPhoto(p.id)}
         />
       ) : (
         <section
@@ -277,7 +383,7 @@ export function Gallery({
           className={`gallery-board ${selectedPhoto ? "is-zoomed" : ""}`}
           onPointerMove={handleBoardPointerMove}
           onClick={() => {
-            if (selectedPhoto) setSelectedId(null);
+            if (selectedPhoto) selectPhoto(null);
           }}
         >
       {selectedPhoto && (
@@ -286,7 +392,7 @@ export function Gallery({
           className="board-zoom-out"
           onClick={(event) => {
             event.stopPropagation();
-            setSelectedId(null);
+            selectPhoto(null);
           }}
           aria-label="Zoom out to full board"
           title="Zoom out"
@@ -297,12 +403,13 @@ export function Gallery({
 
       <div className="gallery-board-canvas">
         {photos.map((photo, index) => {
-          const layout = boardLayouts[index % boardLayouts.length];
+          const slot = slotMap.get(photo.id) ?? slotMap.size + index;
+          const layout = boardLayouts[slot % boardLayouts.length];
           const owner = isOwner(photo);
           const voted = owner || votedIds.has(photo.id);
           const selected = selectedPhoto?.id === photo.id;
           const bursting = burstId === photo.id;
-          const parallax = ((index % 5) - 2) * 18;
+          const parallax = ((slot % 5) - 2) * 18;
 
           return (
             <article
@@ -316,13 +423,13 @@ export function Gallery({
                 "--board-w": `${layout.w}%`,
                 "--board-r": `${layout.r}deg`,
                 "--scroll-shift": `${scrollShift * parallax}px`,
-                "--float-delay": `${index * -0.7}s`,
-                "--float-duration": `${5.5 + (index % 4) * 0.7}s`,
-                zIndex: selected ? 30 : index + 1,
+                "--float-delay": `${slot * -0.7}s`,
+                "--float-duration": `${5.5 + (slot % 4) * 0.7}s`,
+                zIndex: selected ? 30 : slot + 1,
               } as CSSProperties}
               onClick={(event) => {
                 event.stopPropagation();
-                setSelectedId(photo.id);
+                selectPhoto(photo.id);
               }}
             >
               <div className="board-photo-shell">
@@ -338,7 +445,7 @@ export function Gallery({
                 <div className="board-photo-shade" />
                 <div className="board-photo-copy">
                   <h2>{photo.caption}</h2>
-                  <p>{uploaderName(photo.ownerEmail)}</p>
+                  <p>{photo.uploaderName}</p>
                 </div>
                 <div className="board-like-slot">
                   <ThreeHeartButton
@@ -377,6 +484,47 @@ export function Gallery({
                     ))}
                   </div>
                 )}
+                {selected && owner && (
+                  <div style={ownerActionsStyle} onClick={(e) => e.stopPropagation()}>
+                    {confirmDeleteId === photo.id ? (
+                      <>
+                        <button
+                          type="button"
+                          style={deleteConfirmStyle}
+                          disabled={deletingId === photo.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(photo);
+                          }}
+                        >
+                          {deletingId === photo.id ? "Deleting…" : "Confirm delete"}
+                        </button>
+                        <button
+                          type="button"
+                          style={deleteCancelStyle}
+                          disabled={deletingId === photo.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(null);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        style={deleteButtonStyle}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDeleteId(photo.id);
+                        }}
+                      >
+                        Delete photo
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </article>
           );
@@ -386,7 +534,7 @@ export function Gallery({
       )}
 
       {view === "graph" && selectedPhoto && (
-        <div className="graph-modal" onClick={() => setSelectedId(null)}>
+        <div className="graph-modal" onClick={() => selectPhoto(null)}>
           <div className="graph-modal-card" onClick={(e) => e.stopPropagation()}>
             <Image
               src={selectedPhoto.imageUrl}
@@ -400,14 +548,14 @@ export function Gallery({
               type="button"
               className="graph-modal-close"
               aria-label="Close"
-              onClick={() => setSelectedId(null)}
+              onClick={() => selectPhoto(null)}
             >
               ×
             </button>
             <div className="graph-modal-info">
               <div className="min-w-0">
                 <h2>{selectedPhoto.caption}</h2>
-                <p>{uploaderName(selectedPhoto.ownerEmail)}</p>
+                <p>{selectedPhoto.uploaderName}</p>
               </div>
               <ThreeHeartButton
                 disabled={
@@ -434,6 +582,45 @@ export function Gallery({
                 }}
               />
             </div>
+            {isOwner(selectedPhoto) && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 8,
+                  padding: "0 16px 16px",
+                }}
+              >
+                {confirmDeleteId === selectedPhoto.id ? (
+                  <>
+                    <button
+                      type="button"
+                      style={deleteConfirmStyle}
+                      disabled={deletingId === selectedPhoto.id}
+                      onClick={() => handleDelete(selectedPhoto)}
+                    >
+                      {deletingId === selectedPhoto.id ? "Deleting…" : "Confirm delete"}
+                    </button>
+                    <button
+                      type="button"
+                      style={deleteCancelStyle}
+                      disabled={deletingId === selectedPhoto.id}
+                      onClick={() => setConfirmDeleteId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    style={deleteButtonStyle}
+                    onClick={() => setConfirmDeleteId(selectedPhoto.id)}
+                  >
+                    Delete photo
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
