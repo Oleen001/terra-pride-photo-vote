@@ -2,6 +2,7 @@
 
 import {
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -9,11 +10,10 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { useReducedMotion } from "framer-motion";
 import type { GalleryPhoto } from "@/lib/photos";
-import { PhotoLightbox } from "@/components/photo-lightbox";
 import { ImageIcon } from "@/components/icons";
-import { voteAction, unvoteAction } from "@/app/actions/vote";
+import { ThreeHeartButton } from "@/components/three-heart-button";
+import { unvoteAction, voteAction } from "@/app/actions/vote";
 
 type GalleryProps = {
   photos: GalleryPhoto[];
@@ -23,146 +23,46 @@ type GalleryProps = {
   currentUserId: string | null;
 };
 
-type HoldVoteControlProps = {
-  voted: boolean;
-  isOwner: boolean;
-  votingOpen: boolean;
-  loggedIn: boolean;
-  pending: boolean;
-  onCommit: () => void;
-};
+const holdDurationMs = 1500;
 
-const holdDurationMs = 2000;
+const baseBoardLayouts = [
+  { x: 6, y: 7, w: 22, r: -7 },
+  { x: 33, y: 4, w: 18, r: 5 },
+  { x: 62, y: 8, w: 24, r: -2 },
+  { x: 16, y: 43, w: 19, r: 8 },
+  { x: 45, y: 38, w: 23, r: -9 },
+  { x: 75, y: 42, w: 17, r: 6 },
+  { x: 5, y: 76, w: 25, r: -3 },
+  { x: 39, y: 74, w: 18, r: 7 },
+  { x: 68, y: 72, w: 23, r: -6 },
+];
+
+function createBoardLayouts(count: number) {
+  if (count <= baseBoardLayouts.length) return baseBoardLayouts.slice(0, count);
+
+  const columns = count > 24 ? 6 : count > 14 ? 5 : 4;
+  const rows = Math.ceil(count / columns);
+  const cardWidth = count > 24 ? 12 : count > 14 ? 14 : 17;
+  const xStep = 92 / columns;
+  const yStep = 88 / rows;
+
+  return Array.from({ length: count }, (_, index) => {
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+    const jitterX = ((index * 13) % 7) - 3;
+    const jitterY = ((index * 17) % 9) - 4;
+    return {
+      x: 4 + col * xStep + jitterX,
+      y: 5 + row * yStep + jitterY,
+      w: cardWidth + (index % 3) * 1.2,
+      r: ((index * 11) % 14) - 7,
+    };
+  });
+}
 
 function uploaderName(email: string) {
   const name = email.split("@")[0] ?? email;
   return name.replace(/[._-]+/g, " ").trim() || name;
-}
-
-function wrapIndex(index: number, length: number) {
-  return ((index % length) + length) % length;
-}
-
-function relativeIndex(index: number, activeIndex: number, length: number) {
-  const raw = index - activeIndex;
-  const half = Math.floor(length / 2);
-  if (raw > half) return raw - length;
-  if (raw < -half) return raw + length;
-  return raw;
-}
-
-function HoldVoteControl({
-  voted,
-  isOwner,
-  votingOpen,
-  loggedIn,
-  pending,
-  onCommit,
-}: HoldVoteControlProps) {
-  const rafRef = useRef<number | null>(null);
-  const startedAtRef = useRef<number | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [charging, setCharging] = useState(false);
-
-  const clearCharge = useCallback(() => {
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    rafRef.current = null;
-    startedAtRef.current = null;
-    setCharging(false);
-    setProgress(0);
-  }, []);
-
-  useEffect(() => clearCharge, [clearCharge]);
-
-  if (!loggedIn) {
-    return (
-      <a
-        href="/login"
-        onClick={(event) => event.stopPropagation()}
-        className="carousel-like carousel-like-idle"
-      >
-        Sign in
-      </a>
-    );
-  }
-
-  if (isOwner) {
-    return (
-      <span
-        title="คุณโหวตรูปของตัวเองโดยอัตโนมัติ"
-        className="carousel-like carousel-like-liked"
-        onClick={(event) => event.stopPropagation()}
-      >
-        Auto liked
-      </span>
-    );
-  }
-
-  if (!votingOpen) {
-    return (
-      <span
-        title="ขณะนี้ปิดการโหวต"
-        className="carousel-like carousel-like-disabled"
-        onClick={(event) => event.stopPropagation()}
-      >
-        Closed
-      </span>
-    );
-  }
-
-  if (voted) {
-    return (
-      <span
-        className="carousel-like carousel-like-liked"
-        onClick={(event) => event.stopPropagation()}
-      >
-        Liked
-      </span>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      disabled={pending}
-      className={`carousel-like carousel-like-hold ${charging ? "is-charging" : ""}`}
-      style={{ "--hold-progress": progress } as CSSProperties}
-      onClick={(event) => event.stopPropagation()}
-      onPointerDown={(event) => {
-        event.stopPropagation();
-        if (pending) return;
-        event.currentTarget.setPointerCapture(event.pointerId);
-        startedAtRef.current = performance.now();
-        setCharging(true);
-        const tick = () => {
-          if (startedAtRef.current === null) return;
-          const elapsed = performance.now() - startedAtRef.current;
-          setProgress(Math.min(elapsed / holdDurationMs, 1));
-          rafRef.current = requestAnimationFrame(tick);
-        };
-        rafRef.current = requestAnimationFrame(tick);
-      }}
-      onPointerUp={(event) => {
-        event.stopPropagation();
-        const ready = progress >= 1;
-        clearCharge();
-        if (!ready || pending) return;
-        onCommit();
-      }}
-      onPointerCancel={(event) => {
-        event.stopPropagation();
-        clearCharge();
-      }}
-      onPointerLeave={(event) => {
-        event.stopPropagation();
-        if (charging) clearCharge();
-      }}
-      aria-label="Hold for two seconds to like this photo"
-    >
-      <span className="carousel-like-heart">♥</span>
-      <span>{pending ? "Saving…" : charging ? "Hold…" : "Like"}</span>
-    </button>
-  );
 }
 
 export function Gallery({
@@ -172,34 +72,73 @@ export function Gallery({
   loggedIn,
   currentUserId,
 }: GalleryProps) {
-  const reduce = useReducedMotion();
-  const [photos, setPhotos] = useState(initialPhotos);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const photos = initialPhotos;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(() => new Set(initialVotedIds));
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const dragStartRef = useRef<number | null>(null);
-  const dragDeltaRef = useRef(0);
-  const [dragging, setDragging] = useState(false);
+  const [chargingId, setChargingId] = useState<string | null>(null);
+  const [burstId, setBurstId] = useState<string | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const startedAtRef = useRef<number | null>(null);
+  const boardRef = useRef<HTMLElement | null>(null);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [scrollShift, setScrollShift] = useState(0);
+  const boardLayouts = useMemo(() => createBoardLayouts(photos.length), [photos.length]);
+
+  const selectedPhoto = useMemo(
+    () => photos.find((photo) => photo.id === selectedId) ?? null,
+    [photos, selectedId],
+  );
 
   const isOwner = useCallback(
-    (p: GalleryPhoto) => currentUserId !== null && p.ownerUserId === currentUserId,
+    (photo: GalleryPhoto) => currentUserId !== null && photo.ownerUserId === currentUserId,
     [currentUserId],
   );
 
-  const setPending = useCallback((id: string, on: boolean) => {
-    setPendingIds((prev) => {
-      const next = new Set(prev);
-      if (on) next.add(id);
-      else next.delete(id);
-      return next;
-    });
+  const clearHold = useCallback(() => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    startedAtRef.current = null;
+    setChargingId(null);
+    setHoldProgress(0);
   }, []);
 
-  const setWrappedIndex = useCallback(
-    (index: number) => setActiveIndex(wrapIndex(index, photos.length)),
-    [photos.length],
-  );
+  useEffect(() => clearHold, [clearHold]);
+
+  useEffect(() => {
+    let ticking = false;
+    const updateScrollShift = () => {
+      ticking = false;
+      const rect = boardRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const travel = Math.max(rect.height - window.innerHeight, 1);
+      const progress = Math.min(Math.max(-rect.top / travel, 0), 1);
+      setScrollShift(progress);
+    };
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(updateScrollShift);
+    };
+
+    updateScrollShift();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, []);
+
+  const handleBoardPointerMove = useCallback((event: ReactPointerEvent<HTMLElement>) => {
+    const board = boardRef.current;
+    if (!board) return;
+    const rect = board.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    board.style.setProperty("--cursor-x", `${x}%`);
+    board.style.setProperty("--cursor-y", `${y}%`);
+  }, []);
 
   const commitVote = useCallback(
     (photo: GalleryPhoto) => {
@@ -207,12 +146,10 @@ export function Gallery({
       const id = photo.id;
       if (pendingIds.has(id) || votedIds.has(id)) return;
 
-      setVotedIds((prev) => {
-        const next = new Set(prev);
-        next.add(id);
-        return next;
-      });
-      setPending(id, true);
+      setVotedIds((prev) => new Set(prev).add(id));
+      setPendingIds((prev) => new Set(prev).add(id));
+      setBurstId(id);
+      window.setTimeout(() => setBurstId(null), 1100);
 
       voteAction(id)
         .then((res) => {
@@ -231,68 +168,48 @@ export function Gallery({
             return next;
           });
         })
-        .finally(() => setPending(id, false));
+        .finally(() => {
+          setPendingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+        });
     },
-    [isOwner, loggedIn, votingOpen, pendingIds, votedIds, setPending],
+    [isOwner, loggedIn, pendingIds, votedIds, votingOpen],
   );
 
-  const toggleVote = useCallback(
+  const commitUnvote = useCallback(
     (photo: GalleryPhoto) => {
       if (isOwner(photo) || !loggedIn || !votingOpen) return;
       const id = photo.id;
-      if (pendingIds.has(id)) return;
-      const wasVoted = votedIds.has(id);
+      if (pendingIds.has(id) || !votedIds.has(id)) return;
 
       setVotedIds((prev) => {
         const next = new Set(prev);
-        if (wasVoted) next.delete(id);
-        else next.add(id);
+        next.delete(id);
         return next;
       });
-      setPending(id, true);
+      setPendingIds((prev) => new Set(prev).add(id));
 
-      const run = wasVoted ? unvoteAction : voteAction;
-      run(id)
+      unvoteAction(id)
         .then((res) => {
           if (!res.ok) {
-            setVotedIds((prev) => {
-              const next = new Set(prev);
-              if (wasVoted) next.add(id);
-              else next.delete(id);
-              return next;
-            });
+            setVotedIds((prev) => new Set(prev).add(id));
           }
         })
         .catch(() => {
-          setVotedIds((prev) => {
+          setVotedIds((prev) => new Set(prev).add(id));
+        })
+        .finally(() => {
+          setPendingIds((prev) => {
             const next = new Set(prev);
-            if (wasVoted) next.add(id);
-            else next.delete(id);
+            next.delete(id);
             return next;
           });
-        })
-        .finally(() => setPending(id, false));
+        });
     },
-    [isOwner, loggedIn, votingOpen, votedIds, pendingIds, setPending],
-  );
-
-  const handleDeleted = useCallback((id: string) => {
-    setActiveId(null);
-    setPhotos((prev) => prev.filter((p) => p.id !== id));
-    setActiveIndex((prev) => Math.max(0, Math.min(prev, photos.length - 2)));
-  }, [photos.length]);
-
-  useEffect(() => {
-    if (photos.length <= 1 || dragging || reduce) return;
-    const timer = window.setInterval(() => {
-      setActiveIndex((prev) => wrapIndex(prev + 1, photos.length));
-    }, 5600);
-    return () => window.clearInterval(timer);
-  }, [dragging, photos.length, reduce]);
-
-  const activePhoto = useMemo(
-    () => photos.find((p) => p.id === activeId) ?? null,
-    [photos, activeId],
+    [isOwner, loggedIn, pendingIds, votedIds, votingOpen],
   );
 
   if (photos.length === 0) {
@@ -312,134 +229,145 @@ export function Gallery({
   }
 
   return (
-    <>
-      <section
-        className="photo-carousel"
-        onPointerDown={(event) => {
-          dragStartRef.current = event.clientX;
-          dragDeltaRef.current = 0;
-          setDragging(true);
-        }}
-        onPointerMove={(event) => {
-          if (dragStartRef.current === null) return;
-          dragDeltaRef.current = event.clientX - dragStartRef.current;
-        }}
-        onPointerUp={() => {
-          const delta = dragDeltaRef.current;
-          dragStartRef.current = null;
-          dragDeltaRef.current = 0;
-          setDragging(false);
-          if (Math.abs(delta) < 46) return;
-          setWrappedIndex(activeIndex + (delta < 0 ? 1 : -1));
-        }}
-        onPointerCancel={() => {
-          dragStartRef.current = null;
-          dragDeltaRef.current = 0;
-          setDragging(false);
-        }}
-      >
-        <div className="photo-carousel-stage" aria-live="polite">
-          {photos.map((photo, i) => {
-            const owner = isOwner(photo);
-            const voted = owner || votedIds.has(photo.id);
-            const relative = relativeIndex(i, activeIndex, photos.length);
-            const distance = Math.abs(relative);
-            const angle = relative * 36;
-            const visible = distance <= 2;
-            const x = Math.sin((angle * Math.PI) / 180) * 460;
-            const z = 80 - distance * 130;
-            const rotateY = -relative * 26;
-            const rotateZ = relative === 0 ? -1.5 : relative * 2;
-            const scale = Math.max(0.74, 1 - distance * 0.12);
+    <section
+      ref={boardRef}
+      className={`gallery-board ${selectedPhoto ? "is-zoomed" : ""}`}
+      onPointerMove={handleBoardPointerMove}
+      onClick={() => {
+        if (selectedPhoto) setSelectedId(null);
+      }}
+    >
+      {selectedPhoto && (
+        <button
+          type="button"
+          className="board-zoom-out"
+          onClick={(event) => {
+            event.stopPropagation();
+            setSelectedId(null);
+          }}
+          aria-label="Zoom out to full board"
+          title="Zoom out"
+        >
+          −
+        </button>
+      )}
 
-            return (
-              <article
-                key={photo.id}
-                className={`carousel-card ${voted ? "is-liked" : ""}`}
-                style={{
-                  "--carousel-x": `${x}px`,
-                  "--carousel-z": `${z}px`,
-                  "--carousel-ry": `${rotateY}deg`,
-                  "--carousel-rz": `${rotateZ}deg`,
-                  "--carousel-scale": scale,
-                  "--carousel-opacity": visible ? 1 - distance * 0.18 : 0,
-                  zIndex: 20 - distance,
-                  pointerEvents: visible ? "auto" : "none",
-                } as CSSProperties}
-                onPointerMove={(event) => {
-                  if (reduce) return;
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  const px = (event.clientX - rect.left) / rect.width;
-                  const py = (event.clientY - rect.top) / rect.height;
-                  event.currentTarget.style.setProperty("--card-rx", `${(0.5 - py) * 9}deg`);
-                  event.currentTarget.style.setProperty("--card-ry", `${(px - 0.5) * 12}deg`);
-                  event.currentTarget.style.setProperty("--glare-x", `${px * 100}%`);
-                  event.currentTarget.style.setProperty("--glare-y", `${py * 100}%`);
-                }}
-                onPointerLeave={(event) => {
-                  event.currentTarget.style.setProperty("--card-rx", "0deg");
-                  event.currentTarget.style.setProperty("--card-ry", "0deg");
-                }}
-                onClick={() => {
-                  if (i !== activeIndex) {
-                    setWrappedIndex(i);
-                    return;
-                  }
-                  setActiveId(photo.id);
-                }}
-              >
-                <div className="carousel-card-shell">
-                  <Image
-                    src={photo.imageUrl}
-                    alt={photo.caption}
-                    fill
-                    sizes="(max-width: 640px) 92vw, 640px"
-                    priority={i === activeIndex}
-                    unoptimized
-                    className="carousel-card-image"
-                  />
-                  <div className="carousel-card-shade" />
-                  <div className="carousel-card-copy">
-                    <h2>{uploaderName(photo.ownerEmail)}</h2>
-                    <p>{photo.caption}</p>
-                  </div>
-                  <div className="carousel-card-action">
-                    <HoldVoteControl
-                      voted={voted}
-                      isOwner={owner}
-                      votingOpen={votingOpen}
-                      loggedIn={loggedIn}
-                      pending={pendingIds.has(photo.id)}
-                      onCommit={() => commitVote(photo)}
-                    />
-                  </div>
+      <div className="gallery-board-canvas">
+        {photos.map((photo, index) => {
+          const layout = boardLayouts[index % boardLayouts.length];
+          const owner = isOwner(photo);
+          const voted = owner || votedIds.has(photo.id);
+          const selected = selectedPhoto?.id === photo.id;
+          const charging = chargingId === photo.id;
+          const bursting = burstId === photo.id;
+          const parallax = ((index % 5) - 2) * 18;
+
+          return (
+            <article
+              key={photo.id}
+              className={`board-photo ${selected ? "is-selected" : ""} ${
+                voted ? "is-liked" : ""
+              } ${charging ? "is-charging" : ""}`}
+              style={{
+                "--board-x": `${layout.x}%`,
+                "--board-y": `${layout.y}%`,
+                "--board-w": `${layout.w}%`,
+                "--board-r": `${layout.r}deg`,
+                "--hold-progress": charging ? holdProgress : 0,
+                "--scroll-shift": `${scrollShift * parallax}px`,
+                "--float-delay": `${index * -0.7}s`,
+                "--float-duration": `${5.5 + (index % 4) * 0.7}s`,
+                zIndex: selected ? 30 : index + 1,
+              } as CSSProperties}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSelectedId(photo.id);
+              }}
+            >
+              <div className="board-photo-shell">
+                <Image
+                  src={photo.imageUrl}
+                  alt={photo.caption}
+                  fill
+                  quality={92}
+                  unoptimized
+                  sizes={selected ? "(max-width: 768px) 85vw, 620px" : "360px"}
+                  className="board-photo-image"
+                />
+                <div className="board-photo-shade" />
+                <div className="board-photo-copy">
+                  <h2>{photo.caption}</h2>
+                  <p>{uploaderName(photo.ownerEmail)}</p>
                 </div>
-              </article>
-            );
-          })}
-        </div>
-        <div className="carousel-dots" aria-hidden="true">
-          {photos.map((photo, i) => (
-            <span key={photo.id} className={i === activeIndex ? "is-active" : ""} />
-          ))}
-        </div>
-      </section>
-
-      <PhotoLightbox
-        photo={activePhoto}
-        voted={
-          activePhoto
-            ? isOwner(activePhoto) || votedIds.has(activePhoto.id)
-            : false
-        }
-        isOwner={activePhoto ? isOwner(activePhoto) : false}
-        votingOpen={votingOpen}
-        loggedIn={loggedIn}
-        votePending={activePhoto ? pendingIds.has(activePhoto.id) : false}
-        onClose={() => setActiveId(null)}
-        onToggleVote={() => activePhoto && toggleVote(activePhoto)}
-        onDeleted={handleDeleted}
-      />
-    </>
+                <div className="board-like-slot">
+                  <ThreeHeartButton
+                    disabled={!loggedIn || !votingOpen || pendingIds.has(photo.id) || owner}
+                    liked={voted}
+                    progress={charging ? holdProgress : voted ? 1 : 0}
+                    label={
+                      !loggedIn
+                        ? "Sign in"
+                        : owner
+                          ? "Auto liked"
+                          : voted
+                            ? "Liked. Tap to unlike"
+                            : "Hold to like"
+                    }
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                      if (!loggedIn) {
+                        window.location.href = "/login";
+                        return;
+                      }
+                      if (owner || !votingOpen || pendingIds.has(photo.id)) return;
+                      if (voted) {
+                        commitUnvote(photo);
+                        return;
+                      }
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      startedAtRef.current = performance.now();
+                      setChargingId(photo.id);
+                      const tick = () => {
+                        if (startedAtRef.current === null) return;
+                        const elapsed = performance.now() - startedAtRef.current;
+                        const nextProgress = Math.min(elapsed / holdDurationMs, 1);
+                        setHoldProgress(nextProgress);
+                        if (elapsed >= holdDurationMs) {
+                          if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+                          rafRef.current = null;
+                          startedAtRef.current = null;
+                          setChargingId(null);
+                          commitVote(photo);
+                          return;
+                        }
+                        rafRef.current = requestAnimationFrame(tick);
+                      };
+                      rafRef.current = requestAnimationFrame(tick);
+                    }}
+                    onPointerUp={(event) => {
+                      event.stopPropagation();
+                      clearHold();
+                    }}
+                    onPointerCancel={(event) => {
+                      event.stopPropagation();
+                      clearHold();
+                    }}
+                  />
+                </div>
+                {bursting && (
+                  <div className="heart-burst" aria-hidden="true">
+                    {Array.from({ length: 18 }).map((_, i) => (
+                      <span key={i} style={{ "--i": i } as CSSProperties}>
+                        ♥
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }

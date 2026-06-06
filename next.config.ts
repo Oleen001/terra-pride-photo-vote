@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
         hostname: "eljdnhxehkredjwqfypp.supabase.co",
         pathname: "/**",
       },
+      // Demo/seed images (Lorem Picsum sources from Unsplash) — remove before launch
+      { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "https", hostname: "fastly.picsum.photos" },
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
 };

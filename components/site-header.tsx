@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getParticipantSession } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
 import { logoutAction } from "@/app/login/actions";
@@ -22,12 +23,15 @@ export async function SiteHeader() {
           href="/"
           className="group flex shrink-0 items-center gap-2.5 text-sm font-semibold tracking-tight"
         >
-          <span className="grid h-8 w-8 place-items-center rounded-[8px] bg-[conic-gradient(from_180deg,#e4345d,#f59e0b,#f6d84b,#159a6c,#1686d9,#7c3aed,#e4345d)] p-px shadow-sm">
-            <span className="grid h-full w-full place-items-center rounded-[7px] bg-zinc-950 text-[13px] font-bold text-white">
-              T
-            </span>
-          </span>
-          <span className="font-display text-base text-foreground">Terra Pride</span>
+          <Image
+            src="/terra-logo-full.svg"
+            alt="Terra Pride"
+            width={128}
+            height={54}
+            priority
+            unoptimized
+            className="h-9 w-auto"
+          />
         </Link>
 
         <nav className="flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
