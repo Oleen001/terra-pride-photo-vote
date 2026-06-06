@@ -459,6 +459,7 @@ export function Gallery({
                     fill
                     sizes="(max-width: 640px) 92vw, 640px"
                     priority={i === activeIndex}
+                    unoptimized
                     draggable={false}
                     className="carousel-card-image"
                   />
