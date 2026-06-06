@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getParticipantSession } from "@/lib/session";
 import { LoginForm } from "./login-form";
 
-export const metadata = { title: "เข้าสู่ระบบ · Terra Pride" };
+export const metadata = { title: "Sign in · Terra Pride" };
 
 export default async function LoginPage() {
   if (await getParticipantSession()) redirect("/");
@@ -17,7 +17,7 @@ export default async function LoginPage() {
           <h1 className="font-display text-3xl font-semibold tracking-normal text-foreground">
             Terra Pride
           </h1>
-          <p className="mt-2 text-sm leading-6 text-muted">เข้าสู่ระบบด้วยอีเมลที่ได้รับเชิญ</p>
+          <p className="mt-2 text-sm leading-6 text-muted">Sign in with your invited email</p>
         </div>
         <LoginForm />
       </div>

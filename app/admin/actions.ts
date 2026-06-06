@@ -22,7 +22,7 @@ const settingsSchema = z
     votingOpen: z.boolean().optional(),
     revealResultsOpen: z.boolean().optional(),
   })
-  .refine((v) => Object.keys(v).length > 0, "ไม่มีค่าที่จะอัปเดต");
+  .refine((v) => Object.keys(v).length > 0, "Nothing to update.");
 
 /** Toggle one or more app settings. Admin only. */
 export async function updateSettingsAction(
@@ -66,7 +66,7 @@ export async function removeWhitelistAction(
   if (!(await getAdminSession())) return { ok: false, error: "unauthorized" };
 
   const parsed = idSchema.safeParse(id);
-  if (!parsed.success) return { ok: false, error: "รายการไม่ถูกต้อง" };
+  if (!parsed.success) return { ok: false, error: "Invalid entry." };
 
   await removeWhitelistEmail(parsed.data);
   revalidatePath("/admin/whitelist");
@@ -81,7 +81,7 @@ export async function adminDeletePhotoAction(
   if (!(await getAdminSession())) return { ok: false, error: "unauthorized" };
 
   const parsed = photoIdSchema.safeParse(photoId);
-  if (!parsed.success) return { ok: false, error: "รูปภาพไม่ถูกต้อง" };
+  if (!parsed.success) return { ok: false, error: "Invalid photo." };
 
   await adminSoftDeletePhoto(parsed.data);
   revalidatePath("/admin/photos");
@@ -97,7 +97,7 @@ export async function adminRestorePhotoAction(
   if (!(await getAdminSession())) return { ok: false, error: "unauthorized" };
 
   const parsed = photoIdSchema.safeParse(photoId);
-  if (!parsed.success) return { ok: false, error: "รูปภาพไม่ถูกต้อง" };
+  if (!parsed.success) return { ok: false, error: "Invalid photo." };
 
   await adminRestorePhoto(parsed.data);
   revalidatePath("/admin/photos");

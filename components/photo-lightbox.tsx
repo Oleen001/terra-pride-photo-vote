@@ -64,7 +64,7 @@ export function PhotoLightbox({
         setDeleteState({
           photoId: photo.id,
           confirm: true,
-          error: res.error ?? "ลบไม่สำเร็จ",
+          error: res.error ?? "Couldn't delete the photo.",
         });
       }
     });
@@ -150,7 +150,7 @@ export function PhotoLightbox({
                     ) : (
                       <div className="flex flex-col gap-2">
                         <p className="text-[13px] text-muted">
-                          ลบรูปนี้? การลบนี้ย้อนกลับไม่ได้สำหรับคุณ
+                          Delete this photo? This can't be undone on your end.
                         </p>
                         <div className="flex gap-2">
                           <button
@@ -159,7 +159,7 @@ export function PhotoLightbox({
                             onClick={handleDelete}
                             className="inline-flex h-9 flex-1 cursor-pointer items-center justify-center rounded-[8px] bg-red-600 text-[13px] font-medium text-white transition-colors duration-200 hover:bg-red-700 disabled:opacity-60"
                           >
-                            {deleting ? "กำลังลบ…" : "ยืนยันลบ"}
+                            {deleting ? "Deleting…" : "Confirm delete"}
                           </button>
                           <button
                             type="button"
@@ -167,7 +167,7 @@ export function PhotoLightbox({
                             onClick={() => setDeleteState({ photoId: photo.id, confirm: false, error: null })}
                             className="inline-flex h-9 flex-1 cursor-pointer items-center justify-center rounded-[8px] border border-line text-[13px] font-medium text-foreground transition-colors duration-200 hover:bg-foreground/5"
                           >
-                            ยกเลิก
+                            Cancel
                           </button>
                         </div>
                       </div>

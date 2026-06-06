@@ -13,14 +13,14 @@ export function WhitelistAddForm() {
   function onSubmit(formData: FormData) {
     const email = String(formData.get("email") ?? "").trim();
     if (!emailPattern.test(email)) {
-      setError("กรุณากรอกอีเมลให้ถูกต้อง");
+      setError("Please enter a valid email.");
       return;
     }
     setError(null);
     startTransition(async () => {
       const res = await addWhitelistAction(email);
       if (!res.ok) {
-        setError(res.error ?? "เพิ่มไม่สำเร็จ");
+        setError(res.error ?? "Couldn't add the email.");
         return;
       }
       inputRef.current?.form?.reset();
@@ -37,7 +37,7 @@ export function WhitelistAddForm() {
         htmlFor="whitelist-email"
         className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
       >
-        เพิ่มอีเมลเข้า Whitelist
+        Add an email to the whitelist
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
@@ -55,7 +55,7 @@ export function WhitelistAddForm() {
           disabled={pending}
           className="min-h-11 cursor-pointer rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          {pending ? "กำลังเพิ่ม…" : "เพิ่ม"}
+          {pending ? "Adding…" : "Add"}
         </button>
       </div>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}

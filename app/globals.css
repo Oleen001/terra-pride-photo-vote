@@ -395,42 +395,25 @@ body::before {
 
 .view-tabs {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   width: max-content;
   margin: 18px auto 10px;
-  padding: 5px;
+  padding: 4px;
   border-radius: 100px;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: #ffffff;
 }
 
 .view-tabs button {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 20px;
+  display: grid;
+  place-items: center;
+  padding: 8px 24px;
   border: none;
   border-radius: 100px;
   background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
+  color: #202020;
   cursor: pointer;
   transition: color 200ms ease, background 200ms ease, box-shadow 240ms ease;
-}
-
-.view-tab-text {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  line-height: 1;
-}
-
-.view-tab-text small {
-  font-size: 10px;
-  font-weight: 500;
-  opacity: 0.72;
 }
 
 .view-tabs button.is-active {
@@ -438,8 +421,8 @@ body::before {
   background: linear-gradient(95deg, #e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982);
   background-size: 200% 100%;
   box-shadow:
-    0 0 20px rgba(255, 90, 160, 0.5),
-    0 2px 12px rgba(0, 0, 0, 0.35);
+    0 0 20px rgba(255, 90, 160, 0.55),
+    0 2px 12px rgba(0, 0, 0, 0.3);
   animation: tab-rainbow 6s linear infinite;
 }
 

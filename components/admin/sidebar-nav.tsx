@@ -12,18 +12,18 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
-  { href: "/admin", label: "ภาพรวม", icon: <GridIcon /> },
-  { href: "/admin/photos", label: "รูปภาพ", icon: <ImageIcon /> },
+  { href: "/admin", label: "Overview", icon: <GridIcon /> },
+  { href: "/admin/photos", label: "Photos", icon: <ImageIcon /> },
   { href: "/admin/whitelist", label: "Whitelist", icon: <MailIcon /> },
-  { href: "/admin/logs", label: "บันทึกอีเมล", icon: <MailLogIcon /> },
-  { href: "/admin/settings", label: "ตั้งค่า", icon: <SettingsIcon /> },
+  { href: "/admin/logs", label: "Email logs", icon: <MailLogIcon /> },
+  { href: "/admin/settings", label: "Settings", icon: <SettingsIcon /> },
 ];
 
 export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-1 lg:flex-col" aria-label="เมนูผู้ดูแล">
+    <nav className="flex gap-1 lg:flex-col" aria-label="Admin menu">
       {items.map((item) => {
         const active =
           item.href === "/admin"

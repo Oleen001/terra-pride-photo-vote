@@ -225,10 +225,10 @@ export function Gallery({
           <ImageIcon className="h-7 w-7" />
         </div>
         <h2 className="font-display text-xl font-semibold text-foreground">
-          ยังไม่มีรูปภาพ
+          No photos yet
         </h2>
         <p className="text-sm text-muted">
-          แกลเลอรียังว่างอยู่ เมื่อมีคนอัปโหลดรูป จะปรากฏที่นี่
+          The gallery is empty for now. Photos will show up here as people upload them.
         </p>
       </div>
     );
@@ -239,28 +239,28 @@ export function Gallery({
       <div className="view-tabs">
         <button
           type="button"
+          aria-label="Board view"
           className={view === "board" ? "is-active" : ""}
           onClick={() => setView("board")}
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
             <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
             <line x1="12" y1="4.5" x2="12" y2="19.5" />
           </svg>
-          <span className="view-tab-text">บอร์ด <small>Board</small></span>
         </button>
         <button
           type="button"
+          aria-label="Graph view"
           className={view === "graph" ? "is-active" : ""}
           onClick={() => setView("graph")}
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
             <circle cx="6" cy="17.5" r="2.4" />
             <circle cx="17.5" cy="6.5" r="2.4" />
             <circle cx="17.5" cy="17.5" r="2.4" />
             <line x1="7.8" y1="15.8" x2="15.8" y2="8.2" />
             <line x1="8.4" y1="17.5" x2="15.1" y2="17.5" />
           </svg>
-          <span className="view-tab-text">กราฟ <small>Graph</small></span>
         </button>
       </div>
 
@@ -350,8 +350,8 @@ export function Gallery({
                         : owner
                           ? "Auto liked"
                           : voted
-                            ? "ถูกใจแล้ว แตะเพื่อยกเลิก"
-                            : "แตะเพื่อถูกใจ"
+                            ? "Liked — tap to unlike"
+                            : "Tap to like"
                     }
                     onClick={(event) => {
                       event.stopPropagation();
@@ -399,7 +399,7 @@ export function Gallery({
             <button
               type="button"
               className="graph-modal-close"
-              aria-label="ปิด"
+              aria-label="Close"
               onClick={() => setSelectedId(null)}
             >
               ×
@@ -418,8 +418,8 @@ export function Gallery({
                   isOwner(selectedPhoto)
                     ? "Auto liked"
                     : votedIds.has(selectedPhoto.id)
-                      ? "ถูกใจแล้ว"
-                      : "ถูกใจ"
+                      ? "Liked"
+                      : "Like"
                 }
                 onClick={(e) => {
                   e.stopPropagation();

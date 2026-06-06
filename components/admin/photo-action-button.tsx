@@ -25,7 +25,7 @@ export function PhotoActionButton({
         ? await adminRestorePhotoAction(photoId)
         : await adminDeletePhotoAction(photoId);
       if (!res.ok) {
-        setError(res.error ?? "ดำเนินการไม่สำเร็จ");
+        setError(res.error ?? "Something went wrong.");
       }
       setConfirming(false);
     });
@@ -41,7 +41,7 @@ export function PhotoActionButton({
           className="inline-flex min-h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
           <RestoreIcon className="size-3.5" />
-          {pending ? "กำลังกู้คืน…" : "กู้คืน"}
+          {pending ? "Restoring…" : "Restore"}
         </button>
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
@@ -60,7 +60,7 @@ export function PhotoActionButton({
             disabled={pending}
             className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
           >
-            {pending ? "กำลังลบ…" : "ยืนยันลบ"}
+            {pending ? "Deleting…" : "Confirm delete"}
           </button>
           <button
             type="button"
@@ -68,7 +68,7 @@ export function PhotoActionButton({
             disabled={pending}
             className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-500 transition hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
-            ยกเลิก
+            Cancel
           </button>
         </div>
         {error && (
@@ -85,7 +85,7 @@ export function PhotoActionButton({
       className="inline-flex min-h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 dark:hover:text-red-400"
     >
       <TrashIcon className="size-3.5" />
-      ลบ
+      Delete
     </button>
   );
 }

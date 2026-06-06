@@ -33,7 +33,7 @@ export function SettingsToggle({
       const res = await updateSettingsAction({ [settingKey]: next });
       if (!res.ok) {
         setOn(!next);
-        setError(res.error ?? "บันทึกไม่สำเร็จ");
+        setError(res.error ?? "Couldn't save the change.");
       }
     });
   }
@@ -48,7 +48,7 @@ export function SettingsToggle({
             </h3>
             {pending && (
               <span className="text-xs text-zinc-400 dark:text-zinc-500">
-                กำลังบันทึก…
+                Saving…
               </span>
             )}
           </div>

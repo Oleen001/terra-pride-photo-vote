@@ -47,7 +47,7 @@ export function VoteButton({
     return (
       <span
         onClick={(e) => e.stopPropagation()}
-        title="คุณโหวตรูปของตัวเองโดยอัตโนมัติ (ยกเลิกไม่ได้)"
+        title="Your own photo is voted automatically (can't be removed)"
         className={`inline-flex cursor-default items-center gap-2 rounded-full bg-accent font-medium text-white shadow-sm ${pad}`}
       >
         <HeartIcon className={iconSize} filled />
@@ -61,7 +61,7 @@ export function VoteButton({
     return (
       <span
         onClick={(e) => e.stopPropagation()}
-        title="ขณะนี้ปิดการโหวต"
+        title="Voting is closed right now"
         className={`inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-line bg-surface/80 font-medium text-muted/55 backdrop-blur ${pad}`}
       >
         <HeartIcon className={iconSize} filled={voted} />

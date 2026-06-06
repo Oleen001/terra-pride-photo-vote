@@ -6,14 +6,14 @@ const BREVO_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
 
 function otpContent(code: string) {
   return {
-    subject: `รหัสเข้าสู่ระบบ Terra Pride: ${code}`,
-    textContent: `รหัส OTP ของคุณคือ ${code}\nรหัสนี้ใช้ได้ภายใน 10 นาที และใช้ได้ครั้งเดียว`,
+    subject: `Your Terra Pride login code: ${code}`,
+    textContent: `Your OTP code is ${code}\nThis code is valid for 10 minutes and can only be used once.`,
     htmlContent: `
       <div style="font-family:system-ui,-apple-system,sans-serif;max-width:420px;margin:0 auto;padding:32px 24px;color:#1a1a1a">
         <h1 style="font-size:18px;margin:0 0 8px">Terra Pride Photo Vote</h1>
-        <p style="font-size:14px;color:#666;margin:0 0 24px">รหัสเข้าสู่ระบบของคุณ</p>
+        <p style="font-size:14px;color:#666;margin:0 0 24px">Your login code</p>
         <div style="font-size:36px;font-weight:700;letter-spacing:8px;background:#f4f4f5;border-radius:12px;padding:20px;text-align:center">${code}</div>
-        <p style="font-size:13px;color:#888;margin:24px 0 0">รหัสนี้ใช้ได้ภายใน 10 นาที และใช้ได้ครั้งเดียว หากคุณไม่ได้ร้องขอ กรุณาเพิกเฉยอีเมลนี้</p>
+        <p style="font-size:13px;color:#888;margin:24px 0 0">This code is valid for 10 minutes and can only be used once. If you didn't request it, you can safely ignore this email.</p>
       </div>`,
   };
 }
