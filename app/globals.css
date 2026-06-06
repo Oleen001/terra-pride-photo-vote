@@ -89,11 +89,11 @@ body::before {
 }
 
 .login-title {
-  max-width: 12ch;
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.06;
+  max-width: 14ch;
+  font-family: var(--font-monoton), "Monoton", system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.18;
   text-wrap: balance;
 }
 
