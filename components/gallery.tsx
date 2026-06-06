@@ -9,11 +9,10 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import type { GalleryPhoto } from "@/lib/photos";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { ImageIcon } from "@/components/icons";
-import { TraceCardThree } from "@/components/trace-card-three";
 import { voteAction, unvoteAction } from "@/app/actions/vote";
 
 type GalleryProps = {
@@ -60,12 +59,10 @@ function HoldVoteControl({
   pending,
   onCommit,
 }: HoldVoteControlProps) {
-  const reduce = useReducedMotion();
   const rafRef = useRef<number | null>(null);
   const startedAtRef = useRef<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [charging, setCharging] = useState(false);
-  const [splash, setSplash] = useState(false);
 
   const clearCharge = useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
@@ -128,9 +125,7 @@ function HoldVoteControl({
     <button
       type="button"
       disabled={pending}
-      className={`carousel-like carousel-like-hold ${charging ? "is-charging" : ""} ${
-        splash ? "is-splashing" : ""
-      }`}
+      className={`carousel-like carousel-like-hold ${charging ? "is-charging" : ""}`}
       style={{ "--hold-progress": progress } as CSSProperties}
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => {
@@ -139,7 +134,6 @@ function HoldVoteControl({
         event.currentTarget.setPointerCapture(event.pointerId);
         startedAtRef.current = performance.now();
         setCharging(true);
-        setSplash(false);
         const tick = () => {
           if (startedAtRef.current === null) return;
           const elapsed = performance.now() - startedAtRef.current;
@@ -153,9 +147,7 @@ function HoldVoteControl({
         const ready = progress >= 1;
         clearCharge();
         if (!ready || pending) return;
-        setSplash(true);
         onCommit();
-        window.setTimeout(() => setSplash(false), reduce ? 120 : 720);
       }}
       onPointerCancel={(event) => {
         event.stopPropagation();
@@ -168,7 +160,7 @@ function HoldVoteControl({
       aria-label="Hold for two seconds to like this photo"
     >
       <span className="carousel-like-heart">♥</span>
-      <span>{pending ? "Saving" : charging ? "Hold" : "Hold to like"}</span>
+      <span>{pending ? "Saving…" : charging ? "Hold…" : "Like"}</span>
     </button>
   );
 }
@@ -354,14 +346,14 @@ export function Gallery({
             const distance = Math.abs(relative);
             const angle = relative * 36;
             const visible = distance <= 2;
-            const x = Math.sin((angle * Math.PI) / 180) * 360;
-            const z = 80 - distance * 120;
+            const x = Math.sin((angle * Math.PI) / 180) * 460;
+            const z = 80 - distance * 130;
             const rotateY = -relative * 26;
             const rotateZ = relative === 0 ? -1.5 : relative * 2;
             const scale = Math.max(0.74, 1 - distance * 0.12);
 
             return (
-              <motion.article
+              <article
                 key={photo.id}
                 className={`carousel-card ${voted ? "is-liked" : ""}`}
                 style={{
@@ -374,12 +366,6 @@ export function Gallery({
                   zIndex: 20 - distance,
                   pointerEvents: visible ? "auto" : "none",
                 } as CSSProperties}
-                initial={reduce ? false : { opacity: 0 }}
-                animate={{ opacity: visible ? 1 - distance * 0.18 : 0 }}
-                transition={{
-                  duration: 0.5,
-                  ease: [0.21, 0.47, 0.32, 0.98],
-                }}
                 onPointerMove={(event) => {
                   if (reduce) return;
                   const rect = event.currentTarget.getBoundingClientRect();
@@ -387,6 +373,8 @@ export function Gallery({
                   const py = (event.clientY - rect.top) / rect.height;
                   event.currentTarget.style.setProperty("--card-rx", `${(0.5 - py) * 9}deg`);
                   event.currentTarget.style.setProperty("--card-ry", `${(px - 0.5) * 12}deg`);
+                  event.currentTarget.style.setProperty("--glare-x", `${px * 100}%`);
+                  event.currentTarget.style.setProperty("--glare-y", `${py * 100}%`);
                 }}
                 onPointerLeave={(event) => {
                   event.currentTarget.style.setProperty("--card-rx", "0deg");
@@ -402,30 +390,14 @@ export function Gallery({
               >
                 <div className="carousel-card-shell">
                   <Image
-                    src={photo.thumbnailUrl ?? photo.imageUrl}
+                    src={photo.imageUrl}
                     alt={photo.caption}
                     fill
-                    sizes="(max-width: 640px) 86vw, 560px"
+                    sizes="(max-width: 640px) 92vw, 640px"
+                    priority={i === activeIndex}
                     className="carousel-card-image"
                   />
                   <div className="carousel-card-shade" />
-                  <div className="carousel-card-top">
-                    <div>
-                      <p className="carousel-card-label">COORDINATES:</p>
-                      <p className="carousel-card-coords">
-                        {i % 2 === 0
-                          ? "297,270 183,270 183,156 297,156"
-                          : "256,229 224,229 224,197 256,197"}
-                      </p>
-                    </div>
-                    <span className="carousel-card-live">
-                      <span />
-                      LIVE
-                    </span>
-                  </div>
-                  <div className="carousel-card-trace">
-                    <TraceCardThree variant={i % 2 === 0 ? "pyramid" : "diamond"} />
-                  </div>
                   <div className="carousel-card-copy">
                     <h2>{uploaderName(photo.ownerEmail)}</h2>
                     <p>{photo.caption}</p>
@@ -440,9 +412,8 @@ export function Gallery({
                       onCommit={() => commitVote(photo)}
                     />
                   </div>
-                  <div className="carousel-pride-aura" />
                 </div>
-              </motion.article>
+              </article>
             );
           })}
         </div>
