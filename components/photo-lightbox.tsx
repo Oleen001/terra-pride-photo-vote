@@ -150,7 +150,7 @@ export function PhotoLightbox({
                     ) : (
                       <div className="flex flex-col gap-2">
                         <p className="text-[13px] text-muted">
-                          Delete this photo? This can't be undone on your end.
+                          Delete this photo? This can&apos;t be undone on your end.
                         </p>
                         <div className="flex gap-2">
                           <button

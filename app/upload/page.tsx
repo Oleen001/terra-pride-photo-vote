@@ -59,7 +59,7 @@ function ClosedState() {
         Uploads are closed right now
       </h2>
       <p className="max-w-xs text-sm text-muted">
-        The organizers haven't opened uploads yet. Please check back later.
+        The organizers haven&apos;t opened uploads yet. Please check back later.
       </p>
       <Link
         href="/"

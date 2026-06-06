@@ -16,12 +16,15 @@ import type { GalleryPhoto } from "@/lib/photos";
 
 type ForceNode = {
   id: string;
-  photo: GalleryPhoto;
+  photo: GalleryPhoto | null;
   img: HTMLImageElement | null;
   r: number;
   x: number;
   y: number;
   appear: number; // 0..1 entrance progress (scale-in from edge)
+  isText?: boolean;
+  fx?: number | null;
+  fy?: number | null;
 };
 
 type ForceGalleryProps = {
@@ -33,6 +36,53 @@ type ForceGalleryProps = {
 
 const RAINBOW = ["#e40303", "#ff8c00", "#ffed00", "#008026", "#2443ff", "#732982", "#e40303"];
 
+const TEXT_NODE_ID = "__typewriter__";
+const TEXT_FONT = "800 30px var(--font-display, system-ui, sans-serif)";
+const TEXT_PAD = 26; // horizontal breathing room added to measured text width
+
+const TYPEWRITER_PHRASES = [
+  "Capture the moment", "Show your colors", "Best shot wins", "Vote your favorite",
+  "Snap and share", "Love is loud", "Be seen", "Proud and loud",
+  "Strike a pose", "Frame the joy", "Make it count", "Pick a winner",
+  "Tap your fave", "Spread the love", "Shine on", "Live in color",
+  "Own your shine", "Smile bright", "Catch the light", "Stay golden",
+  "Color the world", "Find the spark", "Chase the light", "Hold the pose",
+  "Cheer loud", "Glow up", "Light it up", "All are welcome",
+  "Wave your flag", "Stand tall", "Be bold", "Dream in color",
+  "Joy out loud", "Pride wins", "Heart it", "Double tap",
+  "Best smile here", "Strike gold", "Show and tell", "Lens of love",
+  "Picture pride", "Vote with heart", "Pose and post", "Bring the joy",
+  "Loud and proud", "Rainbow ready", "Click for love", "One more shot",
+  "Best in show", "Cheer them on", "Pick a champ", "Shine together",
+  "Brighter as one", "We are pride", "Open hearts", "More color please",
+  "Snap happy", "Smile wide", "Big love", "Tiny moment",
+  "Huge feels", "Pure joy", "Stay you", "Be radiant",
+  "Born to shine", "Free to be", "Hear us roar", "Color outside",
+  "Pose proud", "Live loud", "Love freely", "Bold and bright",
+  "Flash a smile", "Hold the joy", "Made of pride", "Light the night",
+  "Cheer the crew", "Best frame here", "Vote it up", "Tap to cheer",
+  "All the feels", "So much pride", "Keep glowing", "Stay bright",
+  "Bring color", "Find your shine", "Be the spark", "Joy on repeat",
+  "Pride forever", "Color us happy", "Shine your way", "Love wins here",
+  "Look this way", "Big smiles only", "Heart full", "Pure pride",
+  "Glow getter", "One love", "Be the moment", "Capture pride",
+  "Snap your pride", "Loudest cheer",
+];
+
+const TYPE_MS = [70, 110] as const;
+const DELETE_MS = 42;
+const HOLD_MS = 1200;
+const GAP_MS = 360;
+
+function shuffled<T>(arr: T[]): T[] {
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalleryProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,11 +93,15 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
   const sizeRef = useRef({ w: 0, h: 0 });
   const hoverRef = useRef<string | null>(null);
   const parallaxRef = useRef({ x: 0, y: 0 });
+  const textRef = useRef({ shown: "", full: "" });
 
   const votedRef = useRef(votedIds);
-  votedRef.current = votedIds;
   const cbRef = useRef({ isOwner, onSelect });
-  cbRef.current = { isOwner, onSelect };
+
+  useEffect(() => {
+    votedRef.current = votedIds;
+    cbRef.current = { isOwner, onSelect };
+  }, [isOwner, onSelect, votedIds]);
 
   // ── one-time setup ──
   useEffect(() => {
@@ -93,7 +147,35 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       return node;
     };
 
-    const nodes = photos.map((p, i) => makeNode(p, i, false));
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const textNode: ForceNode = {
+      id: TEXT_NODE_ID,
+      photo: null,
+      img: null,
+      r: 30,
+      x: w / 2,
+      y: h / 2,
+      appear: 1,
+      isText: true,
+      fx: w / 2,
+      fy: h / 2,
+    };
+    if (reduceMotion) {
+      textRef.current = {
+        shown: TYPEWRITER_PHRASES[0],
+        full: TYPEWRITER_PHRASES[0],
+      };
+    }
+
+    const measureTextRadius = () => {
+      ctx.font = TEXT_FONT;
+      const width = ctx.measureText(textRef.current.shown || " ").width;
+      return Math.max(34, width / 2 + TEXT_PAD);
+    };
+    textNode.r = measureTextRadius();
+
+    const nodes = [...photos.map((p, i) => makeNode(p, i, false)), textNode];
     nodesRef.current = nodes;
 
     function draw() {
@@ -106,6 +188,27 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       const px = parallaxRef.current.x;
       const py = parallaxRef.current.y;
       for (const n of nodesRef.current) {
+        if (n.isText) {
+          const text = textRef.current.shown;
+          ctx.save();
+          ctx.translate(n.x, n.y);
+          ctx.font = TEXT_FONT;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.shadowColor = "rgba(0,0,0,0.55)";
+          ctx.shadowBlur = 18;
+          ctx.fillStyle = "#fff";
+          ctx.fillText(text, 0, 0);
+          // blinking caret
+          const w = ctx.measureText(text).width;
+          ctx.shadowBlur = 0;
+          ctx.fillStyle =
+            Math.floor(Date.now() / 530) % 2 === 0 ? "#ff7d9c" : "rgba(255,125,156,0)";
+          ctx.fillRect(w / 2 + 5, -15, 3, 30);
+          ctx.restore();
+          continue;
+        }
+        if (!n.photo) continue;
         const liked = cbRef.current.isOwner(n.photo) || votedRef.current.has(n.id);
         const hovered = hoverRef.current === n.id;
         // subtle parallax: deeper (smaller) nodes drift a touch more
@@ -172,6 +275,62 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       sim.alpha(Math.max(sim.alpha(), alpha)).restart();
     };
 
+    // ── typewriter center node: type → hold → delete → next, looping forever.
+    // After each char the text node radius is remeasured and the sim is gently
+    // reheated, so the growing/shrinking collision radius pushes/releases photos.
+    let typeTimer: number | null = null;
+    let caretTimer: number | null = null;
+    if (!reduceMotion) {
+      let queue = shuffled(TYPEWRITER_PHRASES);
+      let qIndex = 0;
+      let phrase = queue[qIndex];
+      let charCount = 0;
+      let mode: "typing" | "holding" | "deleting" = "typing";
+
+      const applyText = () => {
+        textRef.current = { shown: phrase.slice(0, charCount), full: phrase };
+        textNode.r = measureTextRadius();
+        // small reheat keeps collide active so photos respond as radius changes
+        reheat(0.12);
+      };
+
+      const step = () => {
+        if (mode === "typing") {
+          if (charCount < phrase.length) {
+            charCount += 1;
+            applyText();
+            const ms = TYPE_MS[0] + Math.random() * (TYPE_MS[1] - TYPE_MS[0]);
+            typeTimer = window.setTimeout(step, ms);
+          } else {
+            mode = "holding";
+            typeTimer = window.setTimeout(step, HOLD_MS);
+          }
+        } else if (mode === "holding") {
+          mode = "deleting";
+          typeTimer = window.setTimeout(step, DELETE_MS);
+        } else {
+          if (charCount > 0) {
+            charCount -= 1;
+            applyText();
+            typeTimer = window.setTimeout(step, DELETE_MS);
+          } else {
+            qIndex += 1;
+            if (qIndex >= queue.length) {
+              queue = shuffled(TYPEWRITER_PHRASES);
+              qIndex = 0;
+            }
+            phrase = queue[qIndex];
+            mode = "typing";
+            typeTimer = window.setTimeout(step, GAP_MS);
+          }
+        }
+      };
+      applyText();
+      typeTimer = window.setTimeout(step, GAP_MS);
+      // keep the caret blinking even when the sim has cooled to alpha 0
+      caretTimer = window.setInterval(() => draw(), 260);
+    }
+
     const zoomB = d3zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([0.25, 3])
       .on("zoom", (event) => {
@@ -197,6 +356,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       const ns = nodesRef.current;
       for (let i = ns.length - 1; i >= 0; i--) {
         const n = ns[i];
+        if (n.isText) continue;
         // mirror draw()'s parallax offset so taps land on the visual node
         const hovered = hoverRef.current === n.id;
         const depth = (n.r - 41) * 0.6 + (hovered ? 0 : 1);
@@ -218,7 +378,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     const onUp = (e: PointerEvent) => {
       if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return;
       const n = nodeAt(e.clientX, e.clientY);
-      if (n) cbRef.current.onSelect(n.photo);
+      if (n?.photo) cbRef.current.onSelect(n.photo);
     };
     const onMove = (e: PointerEvent) => {
       const { w, h } = sizeRef.current;
@@ -247,12 +407,16 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       sim.force("center", forceCenter(w / 2, h / 2));
       sim.force("x", forceX(w / 2).strength(0.045));
       sim.force("y", forceY(h / 2).strength(0.045));
+      textNode.fx = w / 2;
+      textNode.fy = h / 2;
       reheat(0.3);
     };
     window.addEventListener("resize", onResize);
 
     return () => {
       sim.stop();
+      if (typeTimer !== null) window.clearTimeout(typeTimer);
+      if (caretTimer !== null) window.clearInterval(caretTimer);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointermove", onMove);
@@ -296,8 +460,8 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
         changed = true;
       }
     });
-    // remove deleted
-    const filtered = existing.filter((n) => incomingIds.has(n.id));
+    // remove deleted (keep the pinned typewriter text node)
+    const filtered = existing.filter((n) => n.isText || incomingIds.has(n.id));
     if (filtered.length !== existing.length) changed = true;
 
     if (changed) {

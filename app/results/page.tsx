@@ -51,7 +51,7 @@ function NotRevealed() {
   return (
     <div className="flex flex-col items-center gap-3 rounded-[8px] border border-line bg-surface px-6 py-16 text-center shadow-sm">
       <h2 className="text-base font-semibold text-foreground">
-        Results aren't out yet
+        Results aren&apos;t out yet
       </h2>
       <p className="max-w-xs text-sm text-muted">
         The results will be revealed once the organizers officially announce the Top 10.

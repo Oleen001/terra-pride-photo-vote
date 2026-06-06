@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "25mb" },
   },
   images: {
+    qualities: [75, 92],
     remotePatterns: [
       {
         protocol: "https",

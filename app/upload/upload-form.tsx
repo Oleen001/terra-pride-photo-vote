@@ -113,7 +113,7 @@ export function UploadForm() {
             ) : (
               <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 text-center text-muted">
                 <ImageIcon className="h-10 w-10" />
-                <span className="text-xs">HEIC previews can't be shown in the browser<br />We'll convert it to WebP automatically</span>
+                <span className="text-xs">HEIC previews can&apos;t be shown in the browser<br />We&apos;ll convert it to WebP automatically</span>
               </div>
             )}
             <button
