@@ -223,6 +223,8 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
         x: ((e.clientX - rect.left) / w - 0.5) * 2,
         y: ((e.clientY - rect.top) / h - 0.5) * 2,
       };
+      wrap.style.setProperty("--cursor-x", `${e.clientX - rect.left}px`);
+      wrap.style.setProperty("--cursor-y", `${e.clientY - rect.top}px`);
       const n = nodeAt(e.clientX, e.clientY);
       const id = n?.id ?? null;
       if (id !== hoverRef.current) {

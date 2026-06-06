@@ -396,26 +396,78 @@ body::before {
 .view-tabs {
   display: flex;
   gap: 6px;
-  justify-content: center;
-  padding: 16px 0 8px;
+  align-items: center;
+  width: max-content;
+  margin: 18px auto 10px;
+  padding: 5px;
+  border-radius: 100px;
+  background: var(--surface);
+  border: 1px solid var(--line);
 }
 
 .view-tabs button {
-  padding: 7px 20px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 100px;
   background: transparent;
   color: var(--muted);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 180ms ease;
+  transition: color 200ms ease, background 200ms ease, box-shadow 240ms ease;
+}
+
+.view-tab-text {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  line-height: 1;
+}
+
+.view-tab-text small {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.72;
 }
 
 .view-tabs button.is-active {
-  background: var(--foreground);
-  color: var(--background);
-  border-color: var(--foreground);
+  color: #fff;
+  background: linear-gradient(95deg, #e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982);
+  background-size: 200% 100%;
+  box-shadow:
+    0 0 20px rgba(255, 90, 160, 0.5),
+    0 2px 12px rgba(0, 0, 0, 0.35);
+  animation: tab-rainbow 6s linear infinite;
+}
+
+@keyframes tab-rainbow {
+  to { background-position: 200% 0; }
+}
+
+/* Cursor-following dot spotlight inside the graph view (like the board). */
+.force-gallery::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0 0.9px, transparent 1.2px);
+  background-size: 11px 11px;
+  mask-image: radial-gradient(
+    circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
+    black 0,
+    rgba(0, 0, 0, 0.7) 70px,
+    transparent 240px
+  );
+  opacity: 0.7;
+}
+
+.force-canvas {
+  position: relative;
+  z-index: 1;
 }
 
 .force-gallery {
