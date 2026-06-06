@@ -1,36 +1,21 @@
 "use client";
 
-import type { CSSProperties, PointerEventHandler } from "react";
+import type { MouseEventHandler } from "react";
 
 type ThreeHeartButtonProps = {
   disabled: boolean;
   liked: boolean;
-  progress: number;
   label: string;
-  onPointerDown: PointerEventHandler<HTMLButtonElement>;
-  onPointerUp: PointerEventHandler<HTMLButtonElement>;
-  onPointerCancel: PointerEventHandler<HTMLButtonElement>;
+  onClick: MouseEventHandler<HTMLButtonElement>;
 };
 
-export function ThreeHeartButton({
-  disabled,
-  liked,
-  progress,
-  label,
-  onPointerDown,
-  onPointerUp,
-  onPointerCancel,
-}: ThreeHeartButtonProps) {
+export function ThreeHeartButton({ disabled, liked, label, onClick }: ThreeHeartButtonProps) {
   return (
     <button
       type="button"
       disabled={disabled}
       className={`three-heart-button ${liked ? "is-liked" : ""}`}
-      style={{ "--heart-progress": progress } as CSSProperties}
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerCancel}
-      onClick={(event) => event.stopPropagation()}
+      onClick={onClick}
       aria-label={label}
       title={label}
     >

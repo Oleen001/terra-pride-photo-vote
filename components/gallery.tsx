@@ -23,8 +23,6 @@ type GalleryProps = {
   currentUserId: string | null;
 };
 
-const holdDurationMs = 1500;
-
 const baseBoardLayouts = [
   { x: 6, y: 7, w: 22, r: -7 },
   { x: 33, y: 4, w: 18, r: 5 },
@@ -76,12 +74,8 @@ export function Gallery({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(() => new Set(initialVotedIds));
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
-  const [chargingId, setChargingId] = useState<string | null>(null);
   const [burstId, setBurstId] = useState<string | null>(null);
-  const rafRef = useRef<number | null>(null);
-  const startedAtRef = useRef<number | null>(null);
   const boardRef = useRef<HTMLElement | null>(null);
-  const [holdProgress, setHoldProgress] = useState(0);
   const [scrollShift, setScrollShift] = useState(0);
   const boardLayouts = useMemo(() => createBoardLayouts(photos.length), [photos.length]);
 
@@ -94,16 +88,6 @@ export function Gallery({
     (photo: GalleryPhoto) => currentUserId !== null && photo.ownerUserId === currentUserId,
     [currentUserId],
   );
-
-  const clearHold = useCallback(() => {
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    rafRef.current = null;
-    startedAtRef.current = null;
-    setChargingId(null);
-    setHoldProgress(0);
-  }, []);
-
-  useEffect(() => clearHold, [clearHold]);
 
   useEffect(() => {
     let ticking = false;
@@ -149,7 +133,7 @@ export function Gallery({
       setVotedIds((prev) => new Set(prev).add(id));
       setPendingIds((prev) => new Set(prev).add(id));
       setBurstId(id);
-      window.setTimeout(() => setBurstId(null), 1100);
+      window.setTimeout(() => setBurstId(null), 1500);
 
       voteAction(id)
         .then((res) => {
@@ -258,7 +242,6 @@ export function Gallery({
           const owner = isOwner(photo);
           const voted = owner || votedIds.has(photo.id);
           const selected = selectedPhoto?.id === photo.id;
-          const charging = chargingId === photo.id;
           const bursting = burstId === photo.id;
           const parallax = ((index % 5) - 2) * 18;
 
@@ -267,13 +250,12 @@ export function Gallery({
               key={photo.id}
               className={`board-photo ${selected ? "is-selected" : ""} ${
                 voted ? "is-liked" : ""
-              } ${charging ? "is-charging" : ""}`}
+              }`}
               style={{
                 "--board-x": `${layout.x}%`,
                 "--board-y": `${layout.y}%`,
                 "--board-w": `${layout.w}%`,
                 "--board-r": `${layout.r}deg`,
-                "--hold-progress": charging ? holdProgress : 0,
                 "--scroll-shift": `${scrollShift * parallax}px`,
                 "--float-delay": `${index * -0.7}s`,
                 "--float-duration": `${5.5 + (index % 4) * 0.7}s`,
@@ -303,17 +285,16 @@ export function Gallery({
                   <ThreeHeartButton
                     disabled={!loggedIn || !votingOpen || pendingIds.has(photo.id) || owner}
                     liked={voted}
-                    progress={charging ? holdProgress : voted ? 1 : 0}
                     label={
                       !loggedIn
                         ? "Sign in"
                         : owner
                           ? "Auto liked"
                           : voted
-                            ? "Liked. Tap to unlike"
-                            : "Hold to like"
+                            ? "ถูกใจแล้ว แตะเพื่อยกเลิก"
+                            : "แตะเพื่อถูกใจ"
                     }
-                    onPointerDown={(event) => {
+                    onClick={(event) => {
                       event.stopPropagation();
                       if (!loggedIn) {
                         window.location.href = "/login";
@@ -324,33 +305,7 @@ export function Gallery({
                         commitUnvote(photo);
                         return;
                       }
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      startedAtRef.current = performance.now();
-                      setChargingId(photo.id);
-                      const tick = () => {
-                        if (startedAtRef.current === null) return;
-                        const elapsed = performance.now() - startedAtRef.current;
-                        const nextProgress = Math.min(elapsed / holdDurationMs, 1);
-                        setHoldProgress(nextProgress);
-                        if (elapsed >= holdDurationMs) {
-                          if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-                          rafRef.current = null;
-                          startedAtRef.current = null;
-                          setChargingId(null);
-                          commitVote(photo);
-                          return;
-                        }
-                        rafRef.current = requestAnimationFrame(tick);
-                      };
-                      rafRef.current = requestAnimationFrame(tick);
-                    }}
-                    onPointerUp={(event) => {
-                      event.stopPropagation();
-                      clearHold();
-                    }}
-                    onPointerCancel={(event) => {
-                      event.stopPropagation();
-                      clearHold();
+                      commitVote(photo);
                     }}
                   />
                 </div>
