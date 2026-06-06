@@ -154,7 +154,7 @@ export function UploadForm() {
           rows={3}
           maxLength={280}
           placeholder="Tell the story behind this photo…"
-          className="resize-none rounded-[8px] border border-line bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent"
+          className="field-input resize-none"
         />
       </div>
 
@@ -171,11 +171,7 @@ export function UploadForm() {
         )}
       </AnimatePresence>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md disabled:opacity-50"
-      >
+      <button type="submit" disabled={pending} className="field-button">
         {pending ? (
           "Uploading…"
         ) : (

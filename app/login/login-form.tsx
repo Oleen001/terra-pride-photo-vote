@@ -16,11 +16,7 @@ type Burst = {
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full rounded-[8px] bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md disabled:opacity-50"
-    >
+    <button type="submit" disabled={pending} className="field-button">
       {pending ? "Working…" : label}
     </button>
   );
@@ -100,7 +96,7 @@ export function LoginForm() {
             autoComplete="email"
             placeholder="you@example.com"
             onInput={(event) => triggerBurst(event, setEmailBurst, 7.2)}
-            className="login-rainbow-field w-full rounded-[8px] border border-line bg-background px-4 py-3 text-sm text-foreground outline-none transition read-only:bg-foreground/5 read-only:text-muted"
+            className="field-input login-rainbow-field"
           />
           <TypingBurst burst={emailBurst} />
         </div>
@@ -122,7 +118,7 @@ export function LoginForm() {
               autoFocus
               placeholder="000000"
               onInput={(event) => triggerBurst(event, setCodeBurst, 18)}
-              className="login-rainbow-field w-full rounded-[8px] border border-line bg-background px-4 py-3 text-center text-lg tracking-[0.5em] text-foreground outline-none transition"
+              className="field-input login-rainbow-field text-center text-lg tracking-[0.5em]"
             />
             <TypingBurst burst={codeBurst} />
           </div>

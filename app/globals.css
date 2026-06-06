@@ -60,6 +60,33 @@ body::before {
   background: color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
+/* Ambient "dragon" — a glowing rainbow trail that slithers across the
+   viewport behind all content every ~10s. Sits at z-index 0 so it paints
+   ABOVE body::before (-1, the dot/spotlight bg) but below the app content,
+   which is lifted to z-index 1 via the rule below. Previously this also sat
+   at z-index -1 alongside body::before, where the opaque body background /
+   shared layer could hide it. pointer-events none so it never intercepts
+   taps. */
+.dragon-bg {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+/* Keep all app content above the dragon layer without disturbing body::before
+   (which stays at -1). The dragon is the first body child; the header and the
+   page wrapper that follow it get lifted to z-index 1. */
+body > *:not(.dragon-bg) {
+  position: relative;
+  z-index: 1;
+}
+
 .login-card {
   position: relative;
   isolation: isolate;
@@ -95,6 +122,69 @@ body::before {
   letter-spacing: 0.04em;
   line-height: 1.18;
   text-wrap: balance;
+}
+
+/* ── Shared participant-facing form fields ──
+   The login email field is the reference look. Any new front-end input/
+   textarea/select should use `.field-input`; primary actions use
+   `.field-button`. Keeps every participant input visually identical and lets
+   new fields drop in without re-deriving the style. Admin pages opt out. */
+.field-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--background);
+  padding: 0.75rem 1rem; /* py-3 px-4 */
+  font-size: 0.875rem; /* text-sm */
+  color: var(--foreground);
+  outline: none;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    background 200ms ease;
+}
+
+.field-input::placeholder {
+  color: var(--muted);
+}
+
+.field-input:focus {
+  border-color: var(--accent);
+}
+
+.field-input:read-only {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--muted);
+}
+
+.field-button {
+  display: inline-flex;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  background: var(--foreground);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--background);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    opacity 200ms ease;
+}
+
+.field-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.field-button:disabled {
+  cursor: default;
+  opacity: 0.5;
 }
 
 .login-rainbow-field {

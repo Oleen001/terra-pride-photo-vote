@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans_Thai, Geist_Mono, Monoton } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
+import { DragonBg } from "@/components/dragon-bg";
 
 const sans = IBM_Plex_Sans_Thai({
   variable: "--font-geist-sans",
@@ -47,6 +48,7 @@ export default function RootLayout({
       className={`${sans.variable} ${display.variable} ${geistMono.variable} ${monoton.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <DragonBg />
         <SiteHeader />
         <div className="flex flex-1 flex-col">{children}</div>
       </body>
