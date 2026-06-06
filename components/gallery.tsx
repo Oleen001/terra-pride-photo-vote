@@ -13,6 +13,7 @@ import Image from "next/image";
 import type { GalleryPhoto } from "@/lib/photos";
 import { ImageIcon } from "@/components/icons";
 import { ThreeHeartButton } from "@/components/three-heart-button";
+import { ForceGallery } from "@/components/force-gallery";
 import { unvoteAction, voteAction } from "@/app/actions/vote";
 
 type GalleryProps = {
@@ -71,6 +72,7 @@ export function Gallery({
   currentUserId,
 }: GalleryProps) {
   const photos = initialPhotos;
+  const [view, setView] = useState<"board" | "graph">("board");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(() => new Set(initialVotedIds));
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
@@ -213,14 +215,43 @@ export function Gallery({
   }
 
   return (
-    <section
-      ref={boardRef}
-      className={`gallery-board ${selectedPhoto ? "is-zoomed" : ""}`}
-      onPointerMove={handleBoardPointerMove}
-      onClick={() => {
-        if (selectedPhoto) setSelectedId(null);
-      }}
-    >
+    <>
+      <div className="view-tabs">
+        <button
+          type="button"
+          className={view === "board" ? "is-active" : ""}
+          onClick={() => setView("board")}
+        >
+          กระดาน
+        </button>
+        <button
+          type="button"
+          className={view === "graph" ? "is-active" : ""}
+          onClick={() => setView("graph")}
+        >
+          กราฟ
+        </button>
+      </div>
+
+      {view === "graph" ? (
+        <ForceGallery
+          photos={photos}
+          votedIds={votedIds}
+          votingOpen={votingOpen}
+          loggedIn={loggedIn}
+          isOwner={isOwner}
+          onVote={commitVote}
+          onUnvote={commitUnvote}
+        />
+      ) : (
+        <section
+          ref={boardRef}
+          className={`gallery-board ${selectedPhoto ? "is-zoomed" : ""}`}
+          onPointerMove={handleBoardPointerMove}
+          onClick={() => {
+            if (selectedPhoto) setSelectedId(null);
+          }}
+        >
       {selectedPhoto && (
         <button
           type="button"
@@ -323,6 +354,8 @@ export function Gallery({
           );
         })}
       </div>
-    </section>
+        </section>
+      )}
+    </>
   );
 }
