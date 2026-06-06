@@ -22,7 +22,7 @@ type ForceNode = {
   x: number;
   y: number;
   appear: number; // 0..1 entrance progress (scale-in from edge)
-  isText?: boolean;
+  isGlyph?: boolean; // invisible pinned repeller placed along the text baseline
   fx?: number | null;
   fy?: number | null;
 };
@@ -32,44 +32,34 @@ type ForceGalleryProps = {
   votedIds: Set<string>;
   isOwner: (photo: GalleryPhoto) => boolean;
   onSelect: (photo: GalleryPhoto) => void;
+  phrases: string[];
 };
 
 const RAINBOW = ["#e40303", "#ff8c00", "#ffed00", "#008026", "#2443ff", "#732982", "#e40303"];
 
-const TEXT_NODE_ID = "__typewriter__";
+const GLYPH_ID_PREFIX = "__glyph__";
 // NOTE: canvas ctx.font does NOT support CSS var() — must be a concrete family.
 // Monoton is a single-weight (400) display face; no bold available.
-const TEXT_FONT = "400 120px Monoton, ui-sans-serif, system-ui, sans-serif";
-const TEXT_SIZE = 120;
-const TEXT_PAD = 26; // horizontal breathing room added to measured text width
+const TEXT_FONT = "400 60px Monoton, ui-sans-serif, system-ui, sans-serif";
+const TEXT_SIZE = 60;
 
-const TYPEWRITER_PHRASES = [
-  "Capture the moment", "Show your colors", "Best shot wins", "Vote your favorite",
-  "Snap and share", "Love is loud", "Be seen", "Proud and loud",
-  "Strike a pose", "Frame the joy", "Make it count", "Pick a winner",
-  "Tap your fave", "Spread the love", "Shine on", "Live in color",
-  "Own your shine", "Smile bright", "Catch the light", "Stay golden",
-  "Color the world", "Find the spark", "Chase the light", "Hold the pose",
-  "Cheer loud", "Glow up", "Light it up", "All are welcome",
-  "Wave your flag", "Stand tall", "Be bold", "Dream in color",
-  "Joy out loud", "Pride wins", "Heart it", "Double tap",
-  "Best smile here", "Strike gold", "Show and tell", "Lens of love",
-  "Picture pride", "Vote with heart", "Pose and post", "Bring the joy",
-  "Loud and proud", "Rainbow ready", "Click for love", "One more shot",
-  "Best in show", "Cheer them on", "Pick a champ", "Shine together",
-  "Brighter as one", "We are pride", "Open hearts", "More color please",
-  "Snap happy", "Smile wide", "Big love", "Tiny moment",
-  "Huge feels", "Pure joy", "Stay you", "Be radiant",
-  "Born to shine", "Free to be", "Hear us roar", "Color outside",
-  "Pose proud", "Live loud", "Love freely", "Bold and bright",
-  "Flash a smile", "Hold the joy", "Made of pride", "Light the night",
-  "Cheer the crew", "Best frame here", "Vote it up", "Tap to cheer",
-  "All the feels", "So much pride", "Keep glowing", "Stay bright",
-  "Bring color", "Find your shine", "Be the spark", "Joy on repeat",
-  "Pride forever", "Color us happy", "Shine your way", "Love wins here",
-  "Look this way", "Big smiles only", "Heart full", "Pure pride",
-  "Glow getter", "One love", "Be the moment", "Capture pride",
-  "Snap your pride", "Loudest cheer",
+// ── per-glyph repeller tuning ──
+// Each visible non-space char becomes a small pinned node along the text
+// baseline. Together they form an elongated repulsion band that follows the
+// letters instead of one big symmetric circle.
+const GLYPH_CHARGE = -150; // per-glyph repulsion; many small nodes ≈ old single field
+const GLYPH_RADIUS = 24; // small collide radius so photos clear the band without flinging far
+const GLYPH_COLLIDE_PAD = 10; // extra collide padding around each glyph node
+
+// Fallback used only when the DB-managed phrase list is empty (admin hasn't
+// added any, or the fetch failed). Keep it tiny — the real list comes from the
+// `phrases` prop.
+const FALLBACK_PHRASES = [
+  "Capture the moment",
+  "Show your colors",
+  "Vote your favorite",
+  "Love is loud",
+  "Proud and loud",
 ];
 
 const TYPE_MS = [70, 110] as const;
@@ -86,7 +76,7 @@ function shuffled<T>(arr: T[]): T[] {
   return out;
 }
 
-export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalleryProps) {
+export function ForceGallery({ photos, votedIds, isOwner, onSelect, phrases }: ForceGalleryProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const zoomRef = useRef<ZoomBehavior<HTMLCanvasElement, unknown> | null>(null);
@@ -100,6 +90,10 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
 
   const votedRef = useRef(votedIds);
   const cbRef = useRef({ isOwner, onSelect });
+  // Snapshot of the phrase list read once by the setup effect below. The effect
+  // runs once on mount (empty deps), so we capture the prop here; later prop
+  // changes don't re-init the sim (matches the existing once-only design).
+  const phrasesRef = useRef(phrases);
 
   useEffect(() => {
     votedRef.current = votedIds;
@@ -113,6 +107,11 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     if (!wrap || !canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Effective phrase list: DB-managed phrases when present, else the small
+    // built-in fallback.
+    const PHRASES =
+      phrasesRef.current.length > 0 ? phrasesRef.current : FALLBACK_PHRASES;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let transform: ZoomTransform = zoomIdentity;
@@ -152,33 +151,59 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const textNode: ForceNode = {
-      id: TEXT_NODE_ID,
-      photo: null,
-      img: null,
-      r: 30,
-      x: w / 2,
-      y: h / 2,
-      appear: 1,
-      isText: true,
-      fx: w / 2,
-      fy: h / 2,
-    };
     if (reduceMotion) {
       textRef.current = {
-        shown: TYPEWRITER_PHRASES[0],
-        full: TYPEWRITER_PHRASES[0],
+        shown: PHRASES[0],
+        full: PHRASES[0],
       };
     }
 
-    const measureTextRadius = () => {
+    // Build one pinned repeller node per *visible* glyph of the currently shown
+    // text. The text is drawn center-aligned, so each glyph's pin x is its
+    // horizontal offset from center, computed from cumulative measured char
+    // widths: left edge starts at -totalWidth/2, each node sits at the glyph's
+    // midpoint. y is the center line for all. Spaces are skipped (no node) but
+    // still advance the cursor so following glyphs land correctly. Returns the
+    // count of visible glyphs so callers can throttle rebuilds.
+    const glyphNodes: ForceNode[] = [];
+    const buildGlyphNodes = (): number => {
+      const { w, h } = sizeRef.current;
+      const text = textRef.current.shown;
       ctx.font = TEXT_FONT;
-      const width = ctx.measureText(textRef.current.shown || " ").width;
-      return Math.max(34, width / 2 + TEXT_PAD);
-    };
-    textNode.r = measureTextRadius();
+      const total = ctx.measureText(text || " ").width;
+      const startX = w / 2 - total / 2;
+      const cy = h / 2;
 
-    const nodes = [...photos.map((p, i) => makeNode(p, i, false)), textNode];
+      glyphNodes.length = 0;
+      let cursor = 0; // running x offset from startX
+      let visible = 0;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const wch = ctx.measureText(ch).width;
+        if (ch !== " ") {
+          const gx = startX + cursor + wch / 2;
+          glyphNodes.push({
+            id: `${GLYPH_ID_PREFIX}${visible}`,
+            photo: null,
+            img: null,
+            r: GLYPH_RADIUS,
+            x: gx,
+            y: cy,
+            appear: 1,
+            isGlyph: true,
+            fx: gx,
+            fy: cy,
+          });
+          visible++;
+        }
+        cursor += wch;
+      }
+      return visible;
+    };
+    buildGlyphNodes();
+
+    const photoNodes = photos.map((p, i) => makeNode(p, i, false));
+    const nodes = [...photoNodes, ...glyphNodes];
     nodesRef.current = nodes;
 
     function draw() {
@@ -190,27 +215,9 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       ctx.scale(transform.k, transform.k);
       const px = parallaxRef.current.x;
       const py = parallaxRef.current.y;
+      // ── photos ──
       for (const n of nodesRef.current) {
-        if (n.isText) {
-          const text = textRef.current.shown;
-          ctx.save();
-          ctx.translate(n.x, n.y);
-          ctx.font = TEXT_FONT;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.shadowColor = "rgba(0,0,0,0.55)";
-          ctx.shadowBlur = 18;
-          ctx.fillStyle = "#fff";
-          ctx.fillText(text, 0, 0);
-          // blinking caret
-          const w = ctx.measureText(text).width;
-          ctx.shadowBlur = 0;
-          ctx.fillStyle =
-            Math.floor(Date.now() / 530) % 2 === 0 ? "#ff7d9c" : "rgba(255,125,156,0)";
-          ctx.fillRect(w / 2 + 5, -15, 3, 30);
-          ctx.restore();
-          continue;
-        }
+        if (n.isGlyph) continue; // invisible repellers — never drawn
         if (!n.photo) continue;
         const liked = cbRef.current.isOwner(n.photo) || votedRef.current.has(n.id);
         const hovered = hoverRef.current === n.id;
@@ -254,19 +261,38 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
         ctx.stroke();
         ctx.restore();
       }
+
+      // ── text: one center-aligned fillText (visual unchanged from before;
+      // physics now lives in the invisible glyph nodes above) ──
+      const text = textRef.current.shown;
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      ctx.font = TEXT_FONT;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(0,0,0,0.55)";
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = "#fff";
+      ctx.fillText(text, 0, 0);
+      // blinking caret
+      const tw = ctx.measureText(text).width;
+      ctx.shadowBlur = 0;
+      ctx.fillStyle =
+        Math.floor(Date.now() / 530) % 2 === 0 ? "#ff7d9c" : "rgba(255,125,156,0)";
+      ctx.fillRect(tw / 2 + 5, -15, 3, 30);
+      ctx.restore();
     }
     drawRef.current = draw;
 
-    // Same-pole magnet: the text node repels with a charge that scales with its
-    // live radius (wider phrase → stronger field → photos flee into a ring),
-    // while photos keep a modest charge. forceManyBody reads strength via this
-    // accessor only at (re)initialization, so we re-apply the force whenever the
-    // text radius changes (see applyText) to grow/shrink the field live.
-    const CHARGE_K = 9; // text strength ≈ -(r * K); tuned so the ring stays tight, not far-flung
+    // Multi-pole magnet: each invisible glyph node repels with a fixed modest
+    // charge. Spread along the text baseline they form an elongated band that
+    // follows the letters (not one circle); the union of their fields pushes
+    // photos clear of the whole horizontal text strip. Charge is constant per
+    // glyph, so the field strength scales naturally with phrase length (more
+    // chars typed → more poles → wider carved-out band) — no per-tick re-init
+    // of forceManyBody needed. Photos keep a small mutual charge.
     const PHOTO_CHARGE = -40;
-    const MAX_TEXT_CHARGE = -1300; // bound magnitude so nodes never explode / NaN
-    const chargeStrength = (d: ForceNode) =>
-      d.isText ? Math.max(MAX_TEXT_CHARGE, -(d.r * CHARGE_K)) : PHOTO_CHARGE;
+    const chargeStrength = (d: ForceNode) => (d.isGlyph ? GLYPH_CHARGE : PHOTO_CHARGE);
 
     const sim = forceSimulation(nodes)
       .force(
@@ -276,12 +302,12 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
           .distanceMax(Math.max(w, h) * 0.5), // clamp range so it can't shove photos off-canvas forever
       )
       .force("center", forceCenter(w / 2, h / 2))
-      // live radius read each tick so the growing text node carves out space;
-      // text node gets extra padding so it shoves photos a little harder.
+      // glyph nodes get extra collide padding so photos keep a clean margin
+      // from the text band; photos use the original modest padding.
       .force(
         "collide",
         forceCollide<ForceNode>()
-          .radius((d) => d.r + (d.isText ? 14 : 6))
+          .radius((d) => d.r + (d.isGlyph ? GLYPH_COLLIDE_PAD : 6))
           .strength(0.95)
           .iterations(3),
       )
@@ -302,29 +328,49 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       sim.alpha(Math.max(sim.alpha(), alpha)).restart();
     };
 
+    // Rebuild the glyph repeller set to match textRef.current.shown, splice it
+    // back into the live node list (keeping all current photo nodes), hand the
+    // new list to the sim, and reheat. forceManyBody / forceCollide read the
+    // node list lazily via sim.nodes(), so swapping nodes is enough — no need
+    // to re-instantiate the forces themselves.
+    const rebuildGlyphs = (alpha: number) => {
+      buildGlyphNodes();
+      const photosOnly = nodesRef.current.filter((n) => !n.isGlyph);
+      const next = [...photosOnly, ...glyphNodes];
+      nodesRef.current = next;
+      sim.nodes(next);
+      reheat(alpha);
+    };
+
     // Monoton loads async (next/font self-hosts it under the literal family
     // "Monoton"). First measure/paint would use fallback metrics; once the
-    // real glyphs are ready we re-measure the text radius and redraw so it
-    // never flashes the fallback font. We kick off the latin subset load but
-    // rely on fonts.ready (which always resolves) to trigger the redraw, so an
-    // erroring sibling subset can't swallow it.
+    // real glyphs are ready we re-measure glyph positions (the cumulative char
+    // widths change with the real font) and redraw so it never flashes the
+    // fallback font. We kick off the latin subset load but rely on fonts.ready
+    // (which always resolves) to trigger the redraw, so an erroring sibling
+    // subset can't swallow it.
     if (typeof document !== "undefined" && "fonts" in document) {
       const settle = () => {
-        textNode.r = measureTextRadius();
-        reheat(0.2);
+        rebuildGlyphs(0.2);
         draw();
       };
       document.fonts.load(`${TEXT_SIZE}px Monoton`, "AAA").catch(() => {});
       document.fonts.ready.then(settle).catch(settle);
     }
 
-    // ── typewriter center node: type → hold → delete → next, looping forever.
-    // After each char the text node radius is remeasured and the sim is gently
-    // reheated, so the growing/shrinking collision radius pushes/releases photos.
+    // ── typewriter: type → hold → delete → next, looping forever.
+    // After each keystroke we update the shown text, then rebuild the glyph
+    // repeller set ONLY when the count of *visible* glyphs changed (throttle:
+    // skip spaces / sub-glyph changes so we don't thrash the sim). Rebuilding
+    // adds a pole as a char appears and removes one as it deletes, repositions
+    // every glyph along the new (center-aligned) measured width, and reheats —
+    // so the band grows/follows the letters while typing and collapses back
+    // when deleting.
     let typeTimer: number | null = null;
     let caretTimer: number | null = null;
+    let lastGlyphCount = glyphNodes.length;
     if (!reduceMotion) {
-      let queue = shuffled(TYPEWRITER_PHRASES);
+      let queue = shuffled(PHRASES);
       let qIndex = 0;
       let phrase = queue[qIndex];
       let charCount = 0;
@@ -332,21 +378,16 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
 
       const applyText = () => {
         textRef.current = { shown: phrase.slice(0, charCount), full: phrase };
-        const prevR = textNode.r;
-        textNode.r = measureTextRadius();
-        // React to each glyph: when the radius shifts (even slightly) re-apply
-        // forceManyBody so its strength accessor re-reads the new text radius,
-        // growing/shrinking the repulsion field live, then reheat for a visible
-        // shove. Threshold 0.2 keeps it responsive per keystroke without firing
-        // during holds / equal-width chars (no jitter).
-        if (Math.abs(textNode.r - prevR) > 0.2) {
-          sim.force(
-            "charge",
-            forceManyBody<ForceNode>()
-              .strength(chargeStrength)
-              .distanceMax(Math.max(sizeRef.current.w, sizeRef.current.h) * 0.5),
-          );
-          reheat(0.5);
+        // Count visible glyphs in the new string (skip spaces) to decide
+        // whether the repeller set actually changed shape.
+        let visible = 0;
+        for (let i = 0; i < charCount; i++) if (phrase[i] !== " ") visible++;
+        if (visible !== lastGlyphCount) {
+          lastGlyphCount = visible;
+          rebuildGlyphs(0.5);
+        } else {
+          // same glyph count (e.g. typed a space) — just repaint the text
+          draw();
         }
       };
 
@@ -372,7 +413,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
           } else {
             qIndex += 1;
             if (qIndex >= queue.length) {
-              queue = shuffled(TYPEWRITER_PHRASES);
+              queue = shuffled(PHRASES);
               qIndex = 0;
             }
             phrase = queue[qIndex];
@@ -412,7 +453,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       const ns = nodesRef.current;
       for (let i = ns.length - 1; i >= 0; i--) {
         const n = ns[i];
-        if (n.isText) continue;
+        if (n.isGlyph || !n.photo) continue; // glyph repellers are invisible — never hit-test
         // mirror draw()'s parallax offset so taps land on the visual node
         const hovered = hoverRef.current === n.id;
         const depth = (n.r - 41) * 0.6 + (hovered ? 0 : 1);
@@ -469,9 +510,8 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
           .strength(chargeStrength)
           .distanceMax(Math.max(w, h) * 0.5),
       );
-      textNode.fx = w / 2;
-      textNode.fy = h / 2;
-      reheat(0.3);
+      // re-pin every glyph to the new center / re-measured baseline width
+      rebuildGlyphs(0.3);
     };
     window.addEventListener("resize", onResize);
 
@@ -522,8 +562,8 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
         changed = true;
       }
     });
-    // remove deleted (keep the pinned typewriter text node)
-    const filtered = existing.filter((n) => n.isText || incomingIds.has(n.id));
+    // remove deleted (keep the pinned typewriter glyph repeller nodes)
+    const filtered = existing.filter((n) => n.isGlyph || incomingIds.has(n.id));
     if (filtered.length !== existing.length) changed = true;
 
     if (changed) {

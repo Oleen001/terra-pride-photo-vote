@@ -24,6 +24,7 @@ type GalleryProps = {
   votingOpen: boolean;
   loggedIn: boolean;
   currentUserId: string | null;
+  phrases: string[];
 };
 
 const baseBoardLayouts = [
@@ -67,6 +68,7 @@ export function Gallery({
   votingOpen,
   loggedIn,
   currentUserId,
+  phrases,
 }: GalleryProps) {
   const [photos, setPhotos] = useState(initialPhotos);
   const [view, setView] = useState<"board" | "graph">("board");
@@ -338,6 +340,7 @@ export function Gallery({
           votedIds={votedIds}
           isOwner={isOwner}
           onSelect={(p) => selectPhoto(p.id)}
+          phrases={phrases}
         />
       ) : (
         <section
