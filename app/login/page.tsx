@@ -21,7 +21,7 @@ export default async function LoginPage() {
             unoptimized
             className="mb-6 h-11 w-auto"
           />
-          <h1 className="login-title text-3xl font-semibold text-foreground">
+          <h1 className="login-title text-2xl text-foreground sm:text-[1.75rem]">
             Celebrate with us!
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">Sign in with your Terra email</p>

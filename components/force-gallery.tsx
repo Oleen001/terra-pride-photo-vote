@@ -37,7 +37,10 @@ type ForceGalleryProps = {
 const RAINBOW = ["#e40303", "#ff8c00", "#ffed00", "#008026", "#2443ff", "#732982", "#e40303"];
 
 const TEXT_NODE_ID = "__typewriter__";
-const TEXT_FONT = "800 30px var(--font-display, system-ui, sans-serif)";
+// NOTE: canvas ctx.font does NOT support CSS var() — must be a concrete family.
+// Monoton is a single-weight (400) display face; no bold available.
+const TEXT_FONT = "400 120px Monoton, ui-sans-serif, system-ui, sans-serif";
+const TEXT_SIZE = 120;
 const TEXT_PAD = 26; // horizontal breathing room added to measured text width
 
 const TYPEWRITER_PHRASES = [
@@ -71,7 +74,7 @@ const TYPEWRITER_PHRASES = [
 
 const TYPE_MS = [70, 110] as const;
 const DELETE_MS = 42;
-const HOLD_MS = 1200;
+const HOLD_MS = 2500;
 const GAP_MS = 360;
 
 function shuffled<T>(arr: T[]): T[] {
@@ -255,11 +258,19 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     drawRef.current = draw;
 
     const sim = forceSimulation(nodes)
-      .force("charge", forceManyBody().strength(-46))
+      .force("charge", forceManyBody().strength(-86))
       .force("center", forceCenter(w / 2, h / 2))
-      .force("collide", forceCollide<ForceNode>().radius((d) => d.r + 6).iterations(2))
-      .force("x", forceX(w / 2).strength(0.045))
-      .force("y", forceY(h / 2).strength(0.045))
+      // live radius read each tick so the growing text node carves out space;
+      // text node gets extra padding so it shoves photos a little harder.
+      .force(
+        "collide",
+        forceCollide<ForceNode>()
+          .radius((d) => d.r + (d.isText ? 14 : 6))
+          .strength(0.95)
+          .iterations(3),
+      )
+      .force("x", forceX(w / 2).strength(0.022))
+      .force("y", forceY(h / 2).strength(0.022))
       .on("tick", () => {
         // ease entrance scale-in
         for (const n of nodesRef.current) {
@@ -275,6 +286,22 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       sim.alpha(Math.max(sim.alpha(), alpha)).restart();
     };
 
+    // Monoton loads async (next/font self-hosts it under the literal family
+    // "Monoton"). First measure/paint would use fallback metrics; once the
+    // real glyphs are ready we re-measure the text radius and redraw so it
+    // never flashes the fallback font. We kick off the latin subset load but
+    // rely on fonts.ready (which always resolves) to trigger the redraw, so an
+    // erroring sibling subset can't swallow it.
+    if (typeof document !== "undefined" && "fonts" in document) {
+      const settle = () => {
+        textNode.r = measureTextRadius();
+        reheat(0.2);
+        draw();
+      };
+      document.fonts.load(`${TEXT_SIZE}px Monoton`, "AAA").catch(() => {});
+      document.fonts.ready.then(settle).catch(settle);
+    }
+
     // ── typewriter center node: type → hold → delete → next, looping forever.
     // After each char the text node radius is remeasured and the sim is gently
     // reheated, so the growing/shrinking collision radius pushes/releases photos.
@@ -289,9 +316,12 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
 
       const applyText = () => {
         textRef.current = { shown: phrase.slice(0, charCount), full: phrase };
+        const prevR = textNode.r;
         textNode.r = measureTextRadius();
-        // small reheat keeps collide active so photos respond as radius changes
-        reheat(0.12);
+        // Only reheat (hard) when the collision radius actually changed, so the
+        // photos get a visible shove on each new/removed glyph but the sim stays
+        // calm during holds and equal-width keystrokes (no jitter).
+        if (Math.abs(textNode.r - prevR) > 0.5) reheat(0.5);
       };
 
       const step = () => {
@@ -405,8 +435,8 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       setSize();
       const { w, h } = sizeRef.current;
       sim.force("center", forceCenter(w / 2, h / 2));
-      sim.force("x", forceX(w / 2).strength(0.045));
-      sim.force("y", forceY(h / 2).strength(0.045));
+      sim.force("x", forceX(w / 2).strength(0.022));
+      sim.force("y", forceY(h / 2).strength(0.022));
       textNode.fx = w / 2;
       textNode.fy = h / 2;
       reheat(0.3);

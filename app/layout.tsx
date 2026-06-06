@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Sans_Thai, Geist_Mono } from "next/font/google";
+import { Fraunces, IBM_Plex_Sans_Thai, Geist_Mono, Monoton } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 
@@ -20,6 +20,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const monoton = Monoton({
+  variable: "--font-monoton",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Terra Pride — Photo Vote",
   description: "A private photo gallery and voting space for Terra Pride.",
@@ -37,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="th"
-      className={`${sans.variable} ${display.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} ${geistMono.variable} ${monoton.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <SiteHeader />

@@ -85,7 +85,7 @@ export function UploadForm() {
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="group flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[8px] border border-dashed border-line bg-background/70 text-center transition duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:bg-background"
+            className="group flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[8px] border border-dashed border-line bg-background text-center outline-none transition duration-200 hover:-translate-y-0.5 hover:border-accent focus-visible:border-accent"
           >
             <span className="grid h-12 w-12 place-items-center rounded-full bg-surface text-muted shadow-sm transition-colors group-hover:text-accent">
               <ImageIcon className="h-6 w-6" />
@@ -98,7 +98,7 @@ export function UploadForm() {
             </span>
           </button>
         ) : (
-          <div className="relative overflow-hidden rounded-[8px] border border-line bg-foreground/5">
+          <div className="relative overflow-hidden rounded-[8px] border border-line bg-background">
             {preview ? (
               <div className="relative max-h-80 w-full">
                 <Image
