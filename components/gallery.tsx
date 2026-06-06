@@ -129,7 +129,6 @@ function HoldVoteControl({
       style={{ "--hold-progress": progress } as CSSProperties}
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => {
-        event.stopPropagation();
         if (pending) return;
         event.currentTarget.setPointerCapture(event.pointerId);
         startedAtRef.current = performance.now();
@@ -180,6 +179,8 @@ export function Gallery({
   const [activeId, setActiveId] = useState<string | null>(null);
   const dragStartRef = useRef<number | null>(null);
   const dragDeltaRef = useRef(0);
+  const swipedRef = useRef(false);
+  const stageRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
 
   const isOwner = useCallback(
@@ -290,6 +291,15 @@ export function Gallery({
     return () => window.clearInterval(timer);
   }, [dragging, photos.length, reduce]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") setWrappedIndex(activeIndex - 1);
+      else if (e.key === "ArrowRight") setWrappedIndex(activeIndex + 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeIndex, setWrappedIndex]);
+
   const activePhoto = useMemo(
     () => photos.find((p) => p.id === activeId) ?? null,
     [photos, activeId],
@@ -348,19 +358,33 @@ export function Gallery({
       <section
         className="photo-carousel"
         onPointerDown={(event) => {
+          swipedRef.current = false;
+          event.currentTarget.setPointerCapture(event.pointerId);
           dragStartRef.current = event.clientX;
           dragDeltaRef.current = 0;
           setDragging(true);
         }}
         onPointerMove={(event) => {
           if (dragStartRef.current === null) return;
-          dragDeltaRef.current = event.clientX - dragStartRef.current;
+          const delta = event.clientX - dragStartRef.current;
+          dragDeltaRef.current = delta;
+          if (Math.abs(delta) < 8) return; // deadzone: ignore jitter / vertical intent
+          if (stageRef.current) {
+            stageRef.current.style.transition = "none";
+            stageRef.current.style.transform = `translateX(${delta * 0.55}px)`;
+          }
         }}
         onPointerUp={() => {
           const delta = dragDeltaRef.current;
           dragStartRef.current = null;
           dragDeltaRef.current = 0;
           setDragging(false);
+          if (stageRef.current) {
+            stageRef.current.style.transition =
+              "transform 420ms cubic-bezier(0.21, 0.47, 0.32, 0.98)";
+            stageRef.current.style.transform = "";
+          }
+          swipedRef.current = Math.abs(delta) >= 46;
           if (Math.abs(delta) < 46) return;
           setWrappedIndex(activeIndex + (delta < 0 ? 1 : -1));
         }}
@@ -368,9 +392,13 @@ export function Gallery({
           dragStartRef.current = null;
           dragDeltaRef.current = 0;
           setDragging(false);
+          if (stageRef.current) {
+            stageRef.current.style.transition = "transform 420ms ease";
+            stageRef.current.style.transform = "";
+          }
         }}
       >
-        <div className="photo-carousel-stage" aria-live="polite">
+        <div className="photo-carousel-stage" ref={stageRef} aria-live="polite">
           {photos.map((photo, i) => {
             const owner = isOwner(photo);
             const voted = owner || votedIds.has(photo.id);
@@ -413,6 +441,10 @@ export function Gallery({
                   event.currentTarget.style.setProperty("--card-ry", "0deg");
                 }}
                 onClick={() => {
+                  if (swipedRef.current) {
+                    swipedRef.current = false;
+                    return;
+                  }
                   if (i !== activeIndex) {
                     setWrappedIndex(i);
                     return;
@@ -427,6 +459,7 @@ export function Gallery({
                     fill
                     sizes="(max-width: 640px) 92vw, 640px"
                     priority={i === activeIndex}
+                    draggable={false}
                     className="carousel-card-image"
                   />
                   <div className="carousel-card-shade" />
