@@ -121,7 +121,7 @@ export function PhotoLightbox({
                   {photo.caption}
                 </p>
                 <p className="truncate text-xs text-muted">
-                  {photo.ownerEmail}
+                  {photo.uploaderName}
                 </p>
               </div>
 

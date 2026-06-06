@@ -20,7 +20,7 @@ export default async function Home() {
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-2 py-4 sm:px-6">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-top px-2 sm:px-6">
       <Gallery
         photos={photos}
         initialVotedIds={votedIds}

@@ -12,6 +12,7 @@ export type UploadState = { ok: boolean; error?: string };
 
 const MAX_BYTES = 20 * 1024 * 1024; // 20MB
 const MAX_PHOTOS_PER_USER = 5;
+const MAX_CAPTION_LEN = 300;
 
 // Accepted upload extensions. HEIC/HEIF are transcoded server-side; the rest
 // go straight to sharp. The actual content is validated by decoding, so we
@@ -51,6 +52,9 @@ export async function uploadPhotoAction(formData: FormData): Promise<UploadState
   // Caption required.
   const caption = String(formData.get("caption") ?? "").trim();
   if (!caption) return { ok: false, error: "Please add a caption." };
+  if (caption.length > MAX_CAPTION_LEN) {
+    return { ok: false, error: `Caption must be ${MAX_CAPTION_LEN} characters or fewer.` };
+  }
 
   // Size.
   if (file.size > MAX_BYTES) return { ok: false, error: "File is larger than 20MB." };

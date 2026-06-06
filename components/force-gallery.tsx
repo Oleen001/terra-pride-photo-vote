@@ -151,7 +151,6 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     }
     drawRef.current = draw;
 
-    let appearing = false;
     const sim = forceSimulation(nodes)
       .force("charge", forceManyBody().strength(-46))
       .force("center", forceCenter(w / 2, h / 2))
@@ -160,14 +159,11 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       .force("y", forceY(h / 2).strength(0.045))
       .on("tick", () => {
         // ease entrance scale-in
-        let stillAppearing = false;
         for (const n of nodesRef.current) {
           if (n.appear < 1) {
             n.appear = Math.min(1, n.appear + 0.04);
-            if (n.appear < 1) stillAppearing = true;
           }
         }
-        appearing = stillAppearing;
         draw();
       });
     simRef.current = sim;
@@ -175,7 +171,6 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     const reheat = (alpha: number) => {
       sim.alpha(Math.max(sim.alpha(), alpha)).restart();
     };
-    void appearing;
 
     const zoomB = d3zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([0.25, 3])
@@ -197,10 +192,19 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     };
     const nodeAt = (clientX: number, clientY: number): ForceNode | null => {
       const { x, y } = toWorld(clientX, clientY);
+      const px = parallaxRef.current.x;
+      const py = parallaxRef.current.y;
       const ns = nodesRef.current;
       for (let i = ns.length - 1; i >= 0; i--) {
         const n = ns[i];
-        if ((x - n.x) ** 2 + (y - n.y) ** 2 <= n.r * n.r) return n;
+        // mirror draw()'s parallax offset so taps land on the visual node
+        const hovered = hoverRef.current === n.id;
+        const depth = (n.r - 41) * 0.6 + (hovered ? 0 : 1);
+        const ox = px * (6 + depth);
+        const oy = py * (6 + depth);
+        const cx = n.x + ox;
+        const cy = n.y + oy;
+        if ((x - cx) ** 2 + (y - cy) ** 2 <= n.r * n.r) return n;
       }
       return null;
     };
@@ -253,6 +257,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointermove", onMove);
       window.removeEventListener("resize", onResize);
+      select(canvas).on(".zoom", null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

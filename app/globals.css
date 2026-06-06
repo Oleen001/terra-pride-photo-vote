@@ -394,14 +394,15 @@ body::before {
 }
 
 .view-tabs {
+  z-index: 3;
+  position: absolute;
   display: flex;
   gap: 8px;
-  align-items: center;
   width: max-content;
   margin: 18px auto 10px;
   padding: 4px;
   border-radius: 100px;
-  background: #ffffff;
+  background: #181818;
 }
 
 .view-tabs button {
@@ -411,24 +412,20 @@ body::before {
   border: none;
   border-radius: 100px;
   background: transparent;
-  color: #202020;
+  color: #c0c0c0;
   cursor: pointer;
   transition: color 200ms ease, background 200ms ease, box-shadow 240ms ease;
 }
 
 .view-tabs button.is-active {
   color: #fff;
-  background: linear-gradient(95deg, #e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982);
+  background-color: #000;
   background-size: 200% 100%;
   box-shadow:
-    0 0 20px rgba(255, 90, 160, 0.55),
+    0 0 10px rgba(90, 178, 255, 0.55),
     0 2px 12px rgba(0, 0, 0, 0.3);
-  animation: tab-rainbow 6s linear infinite;
 }
 
-@keyframes tab-rainbow {
-  to { background-position: 200% 0; }
-}
 
 /* Cursor-following dot spotlight inside the graph view (like the board). */
 .force-gallery::before {
