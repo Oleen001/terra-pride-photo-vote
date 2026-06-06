@@ -22,14 +22,14 @@ export async function deleteOwnPhotoAction(
   photoId: string,
 ): Promise<DeletePhotoState> {
   const session = await getParticipantSession();
-  if (!session) return { ok: false, error: "กรุณาเข้าสู่ระบบ" };
+  if (!session) return { ok: false, error: "Please sign in." };
 
   const parsed = photoIdSchema.safeParse(photoId);
-  if (!parsed.success) return { ok: false, error: "รูปภาพไม่ถูกต้อง" };
+  if (!parsed.success) return { ok: false, error: "Invalid photo." };
 
   const deleted = await softDeletePhoto(parsed.data, session.userId);
   if (!deleted) {
-    return { ok: false, error: "ไม่พบรูปภาพ หรือไม่มีสิทธิ์ลบ" };
+    return { ok: false, error: "Photo not found, or you don't have permission to delete it." };
   }
 
   revalidatePath("/");

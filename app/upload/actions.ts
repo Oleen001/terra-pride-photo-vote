@@ -32,33 +32,33 @@ function extFromName(name: string): string {
  */
 export async function uploadPhotoAction(formData: FormData): Promise<UploadState> {
   const session = await getParticipantSession();
-  if (!session) return { ok: false, error: "กรุณาเข้าสู่ระบบก่อนอัปโหลด" };
+  if (!session) return { ok: false, error: "Please sign in before uploading." };
 
   const settings = await getSettings();
-  if (!settings.uploadOpen) return { ok: false, error: "ขณะนี้ปิดรับการอัปโหลด" };
+  if (!settings.uploadOpen) return { ok: false, error: "Uploads are closed right now." };
 
   // Per-user cap.
   const existing = await countActivePhotosByOwner(session.userId);
   if (existing >= MAX_PHOTOS_PER_USER) {
-    return { ok: false, error: `อัปโหลดได้สูงสุด ${MAX_PHOTOS_PER_USER} รูปต่อคน` };
+    return { ok: false, error: `You can upload up to ${MAX_PHOTOS_PER_USER} photos.` };
   }
 
   // Exactly one file.
   const files = formData.getAll("file").filter((f): f is File => f instanceof File && f.size > 0);
-  if (files.length !== 1) return { ok: false, error: "กรุณาเลือกรูปภาพ 1 รูป" };
+  if (files.length !== 1) return { ok: false, error: "Please select one photo." };
   const file = files[0];
 
   // Caption required.
   const caption = String(formData.get("caption") ?? "").trim();
-  if (!caption) return { ok: false, error: "กรุณากรอกคำบรรยายภาพ" };
+  if (!caption) return { ok: false, error: "Please add a caption." };
 
   // Size.
-  if (file.size > MAX_BYTES) return { ok: false, error: "ไฟล์ใหญ่เกิน 20MB" };
+  if (file.size > MAX_BYTES) return { ok: false, error: "File is larger than 20MB." };
 
   // Extension allowlist (content re-validated by the decoder below).
   const ext = extFromName(file.name);
   if (!ALLOWED_EXT.has(ext)) {
-    return { ok: false, error: "รองรับเฉพาะไฟล์ jpg, png, webp, heic" };
+    return { ok: false, error: "Only jpg, png, webp, and heic files are supported." };
   }
 
   // Normalize to display + thumbnail WebP. A decode failure means the bytes
@@ -69,7 +69,7 @@ export async function uploadPhotoAction(formData: FormData): Promise<UploadState
     processed = await processUploadImage(buffer, HEIC_EXT.has(ext));
   } catch (err) {
     console.error("processUploadImage failed:", err);
-    return { ok: false, error: "ไฟล์รูปไม่ถูกต้องหรือไม่รองรับ กรุณาลองรูปอื่น" };
+    return { ok: false, error: "That image is invalid or unsupported. Please try another photo." };
   }
 
   // Upload both versions.
@@ -78,7 +78,7 @@ export async function uploadPhotoAction(formData: FormData): Promise<UploadState
     uploaded = await uploadProcessedPhoto(session.userId, processed.full, processed.thumb);
   } catch (err) {
     console.error("uploadProcessedPhoto failed:", err);
-    return { ok: false, error: "อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่" };
+    return { ok: false, error: "Couldn't upload the photo. Please try again." };
   }
 
   // Create the row; on failure clean up the orphaned objects.
@@ -94,7 +94,7 @@ export async function uploadPhotoAction(formData: FormData): Promise<UploadState
   } catch (err) {
     console.error("createPhoto failed:", err);
     await deletePhotoObject(uploaded.imagePath, uploaded.thumbnailPath).catch(() => {});
-    return { ok: false, error: "บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่" };
+    return { ok: false, error: "Couldn't save your photo. Please try again." };
   }
 
   // Auto-vote the owner's own photo (idempotent).

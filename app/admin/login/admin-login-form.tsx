@@ -14,7 +14,7 @@ function SubmitButton() {
       disabled={pending}
       className="w-full rounded-xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
     >
-      {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบผู้ดูแล"}
+      {pending ? "Signing in…" : "Sign in as admin"}
     </button>
   );
 }
@@ -26,7 +26,7 @@ export function AdminLoginForm() {
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          อีเมลผู้ดูแล
+          Admin email
         </label>
         <input
           id="email"
@@ -40,7 +40,7 @@ export function AdminLoginForm() {
       </div>
       <div className="flex flex-col gap-2">
         <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          รหัสผ่าน
+          Password
         </label>
         <input
           id="password"

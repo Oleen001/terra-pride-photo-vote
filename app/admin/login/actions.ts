@@ -16,12 +16,12 @@ export async function adminLoginAction(
 
   const parsed = emailSchema.safeParse(rawEmail);
   if (!parsed.success || !password) {
-    return { email: rawEmail, error: "กรุณากรอกอีเมลและรหัสผ่าน" };
+    return { email: rawEmail, error: "Please enter your email and password." };
   }
 
   const ok = await verifyAdminCredentials(parsed.data, password);
   if (!ok) {
-    return { email: rawEmail, error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
+    return { email: rawEmail, error: "Incorrect email or password." };
   }
 
   await createAdminSession(parsed.data);

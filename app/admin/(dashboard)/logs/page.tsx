@@ -1,11 +1,11 @@
 import { listEmailLogs } from "@/lib/email-log";
 import { MailLogIcon } from "@/components/admin/icons";
 
-export const metadata = { title: "บันทึกอีเมล · ผู้ดูแล Terra Pride" };
+export const metadata = { title: "Email logs · Terra Pride Admin" };
 
 const LIMIT = 200;
 
-const dateFmt = new Intl.DateTimeFormat("th-TH", {
+const dateFmt = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeStyle: "short",
 });
@@ -31,10 +31,9 @@ export default async function AdminEmailLogsPage({
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">บันทึกอีเมล</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Email logs</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          ตรวจสอบว่าระบบส่งอีเมล OTP ออกไปแล้วหรือยัง
-          เมื่อมีผู้เข้าร่วมแจ้งว่าไม่ได้รับ
+          Check whether OTP emails went out when a participant says they didn't receive one.
         </p>
       </header>
 
@@ -43,22 +42,22 @@ export default async function AdminEmailLogsPage({
           type="search"
           name="q"
           defaultValue={query}
-          placeholder="ค้นหาด้วยอีเมลผู้รับ"
-          aria-label="ค้นหาด้วยอีเมลผู้รับ"
+          placeholder="Search by recipient email"
+          aria-label="Search by recipient email"
           className="min-h-11 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500"
         />
         <button
           type="submit"
           className="min-h-11 cursor-pointer rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          ค้นหา
+          Search
         </button>
         {query ? (
           <a
             href="/admin/logs"
             className="flex min-h-11 items-center justify-center rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            ล้าง
+            Clear
           </a>
         ) : null}
       </form>
@@ -66,10 +65,10 @@ export default async function AdminEmailLogsPage({
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-            {query ? `ผลการค้นหา “${query}”` : "อีเมลล่าสุด"}
+            {query ? `Results for “${query}”` : "Recent emails"}
           </h2>
           <span className="text-xs text-zinc-400 dark:text-zinc-500">
-            {rows.length} รายการ · แสดงล่าสุดไม่เกิน {LIMIT}
+            {rows.length} {rows.length === 1 ? "entry" : "entries"} · showing up to {LIMIT} most recent
           </span>
         </div>
 
@@ -77,12 +76,12 @@ export default async function AdminEmailLogsPage({
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
             <MailLogIcon className="size-6 text-zinc-300 dark:text-zinc-600" />
             <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-              {query ? "ไม่พบบันทึกที่ตรงกับคำค้น" : "ยังไม่มีบันทึกการส่งอีเมล"}
+              {query ? "No logs match your search" : "No email activity yet"}
             </p>
             <p className="text-xs text-zinc-400 dark:text-zinc-500">
               {query
-                ? "ลองตรวจสอบการสะกดอีเมล หรือล้างคำค้นเพื่อดูทั้งหมด"
-                : "บันทึกจะปรากฏที่นี่เมื่อระบบเริ่มส่งอีเมล OTP"}
+                ? "Try checking the email spelling, or clear the search to see everything."
+                : "Logs will appear here once the system starts sending OTP emails."}
             </p>
           </div>
         ) : (
@@ -98,17 +97,17 @@ export default async function AdminEmailLogsPage({
                       {formatDate(row.created_at)}
                       {" · "}
                       {row.kind}
-                      {row.provider ? ` · ส่งจาก ${row.provider}` : ""}
+                      {row.provider ? ` · via ${row.provider}` : ""}
                     </p>
                   </div>
                   <div className="shrink-0">
                     {row.status === "sent" ? (
                       <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">
-                        ส่งสำเร็จ
+                        Sent
                       </span>
                     ) : (
                       <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
-                        ส่งไม่สำเร็จ
+                        Failed
                       </span>
                     )}
                   </div>

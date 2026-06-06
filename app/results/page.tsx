@@ -28,7 +28,7 @@ export default async function ResultsPage() {
           Top 10
         </h1>
         <p className="text-sm text-muted">
-          ภาพถ่ายที่ได้รับโหวตสูงสุด
+          The most-voted photos
         </p>
       </div>
 
@@ -37,7 +37,7 @@ export default async function ResultsPage() {
       ) : photos.length === 0 ? (
         <div className="rounded-[8px] border border-line bg-surface px-6 py-14 text-center shadow-sm">
           <p className="text-sm text-muted">
-            ยังไม่มีรูปภาพที่จะจัดอันดับ
+            No photos to rank yet
           </p>
         </div>
       ) : (
@@ -51,16 +51,16 @@ function NotRevealed() {
   return (
     <div className="flex flex-col items-center gap-3 rounded-[8px] border border-line bg-surface px-6 py-16 text-center shadow-sm">
       <h2 className="text-base font-semibold text-foreground">
-        ยังไม่ประกาศผล
+        Results aren't out yet
       </h2>
       <p className="max-w-xs text-sm text-muted">
-        ผลโหวตจะถูกเปิดเผยเมื่อผู้ดูแลประกาศ Top 10 อย่างเป็นทางการ
+        The results will be revealed once the organizers officially announce the Top 10.
       </p>
       <Link
         href="/"
         className="mt-2 inline-flex h-9 items-center rounded-[8px] bg-foreground px-4 text-[13px] font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
       >
-        กลับไปที่แกลเลอรี
+        Back to the gallery
       </Link>
     </div>
   );

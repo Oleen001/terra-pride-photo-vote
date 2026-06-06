@@ -14,16 +14,16 @@ const photoIdSchema = z.string().uuid();
 /** Vote for a photo. Participant-only, gated by votingOpen. Idempotent. */
 export async function voteAction(photoId: string): Promise<VoteState> {
   const session = await getParticipantSession();
-  if (!session) return { ok: false, error: "กรุณาเข้าสู่ระบบ" };
+  if (!session) return { ok: false, error: "Please sign in." };
 
   const parsed = photoIdSchema.safeParse(photoId);
-  if (!parsed.success) return { ok: false, error: "รูปภาพไม่ถูกต้อง" };
+  if (!parsed.success) return { ok: false, error: "Invalid photo." };
 
   const settings = await getSettings();
-  if (!settings.votingOpen) return { ok: false, error: "ขณะนี้ปิดการโหวต" };
+  if (!settings.votingOpen) return { ok: false, error: "Voting is closed right now." };
 
   const photo = await getPhotoById(parsed.data);
-  if (!photo || photo.is_deleted) return { ok: false, error: "ไม่พบรูปภาพนี้" };
+  if (!photo || photo.is_deleted) return { ok: false, error: "This photo wasn't found." };
 
   await createVote(session.userId, parsed.data); // duplicate is a no-op
   revalidatePath("/");
@@ -36,19 +36,19 @@ export async function voteAction(photoId: string): Promise<VoteState> {
  */
 export async function unvoteAction(photoId: string): Promise<VoteState> {
   const session = await getParticipantSession();
-  if (!session) return { ok: false, error: "กรุณาเข้าสู่ระบบ" };
+  if (!session) return { ok: false, error: "Please sign in." };
 
   const parsed = photoIdSchema.safeParse(photoId);
-  if (!parsed.success) return { ok: false, error: "รูปภาพไม่ถูกต้อง" };
+  if (!parsed.success) return { ok: false, error: "Invalid photo." };
 
   const settings = await getSettings();
-  if (!settings.votingOpen) return { ok: false, error: "ขณะนี้ปิดการโหวต" };
+  if (!settings.votingOpen) return { ok: false, error: "Voting is closed right now." };
 
   const photo = await getPhotoById(parsed.data);
-  if (!photo) return { ok: false, error: "ไม่พบรูปภาพนี้" };
+  if (!photo) return { ok: false, error: "This photo wasn't found." };
 
   if (photo.owner_user_id === session.userId) {
-    return { ok: false, error: "ไม่สามารถยกเลิกโหวตรูปของตัวเองได้" };
+    return { ok: false, error: "You can't remove the vote on your own photo." };
   }
 
   await deleteVote(session.userId, parsed.data);

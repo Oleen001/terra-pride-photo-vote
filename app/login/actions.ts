@@ -30,7 +30,7 @@ export async function loginAction(
   // ── Stage 1: request OTP ──
   if (rawCode == null || String(rawCode).trim() === "") {
     if (!(await isWhitelisted(email))) {
-      return { stage: "email", email, error: "อีเมลนี้ไม่อยู่ในรายชื่อผู้มีสิทธิ์เข้าร่วม" };
+      return { stage: "email", email, error: "This email isn't on the guest list." };
     }
     const isDev = process.env.NODE_ENV !== "production";
     let code: string;
@@ -38,10 +38,10 @@ export async function loginAction(
       code = await createOtp(email);
     } catch (err) {
       if (err instanceof OtpCooldownError) {
-        return { stage: "email", email, error: "ขอรหัสถี่เกินไป กรุณารอสักครู่แล้วลองใหม่" };
+        return { stage: "email", email, error: "Too many requests. Please wait a moment and try again." };
       }
       console.error("createOtp failed:", err);
-      return { stage: "email", email, error: "ส่งรหัสไม่สำเร็จ กรุณาลองใหม่" };
+      return { stage: "email", email, error: "Couldn't send the code. Please try again." };
     }
     try {
       await sendOtpEmail(email, code);
@@ -52,7 +52,7 @@ export async function loginAction(
       if (isDev) {
         console.log(`\n  🔑 [DEV] OTP for ${email}: ${code}\n`);
       } else {
-        return { stage: "email", email, error: "ส่งรหัสไม่สำเร็จ กรุณาลองใหม่" };
+        return { stage: "email", email, error: "Couldn't send the code. Please try again." };
       }
     }
     return { stage: "code", email };
@@ -64,12 +64,12 @@ export async function loginAction(
     return { stage: "code", email, error: parsedCode.error.issues[0].message };
   }
   if (!(await isWhitelisted(email))) {
-    return { stage: "email", email, error: "อีเมลนี้ไม่อยู่ในรายชื่อผู้มีสิทธิ์เข้าร่วม" };
+    return { stage: "email", email, error: "This email isn't on the guest list." };
   }
 
   const ok = await verifyOtp(email, parsedCode.data);
   if (!ok) {
-    return { stage: "code", email, error: "รหัสไม่ถูกต้องหรือหมดอายุ" };
+    return { stage: "code", email, error: "That code is incorrect or has expired." };
   }
 
   const user = await upsertUserOnLogin(email);

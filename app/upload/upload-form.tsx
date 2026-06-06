@@ -40,7 +40,7 @@ export function UploadForm() {
       return;
     }
     if (file.size > MAX_BYTES) {
-      setError("ไฟล์ใหญ่เกิน 20MB");
+      setError("File is larger than 20MB");
       resetFile();
       return;
     }
@@ -68,10 +68,10 @@ export function UploadForm() {
           router.push("/");
           router.refresh();
         } else {
-          setError(res.error ?? "อัปโหลดไม่สำเร็จ");
+          setError(res.error ?? "Upload failed");
         }
       } catch {
-        setError("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่");
+        setError("Connection error. Please try again.");
       }
     });
   }
@@ -79,7 +79,7 @@ export function UploadForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">รูปภาพ</span>
+        <span className="text-sm font-medium text-foreground">Photo</span>
 
         {!fileName ? (
           <button
@@ -91,10 +91,10 @@ export function UploadForm() {
               <ImageIcon className="h-6 w-6" />
             </span>
             <span className="text-sm font-medium text-foreground">
-              เลือกรูปภาพ
+              Choose a photo
             </span>
             <span className="text-xs text-muted">
-              jpg, png, webp, heic · สูงสุด 20MB
+              jpg, png, webp, heic · up to 20MB
             </span>
           </button>
         ) : (
@@ -103,7 +103,7 @@ export function UploadForm() {
               <div className="relative max-h-80 w-full">
                 <Image
                   src={preview}
-                  alt="ตัวอย่างรูปที่เลือก"
+                  alt="Selected photo preview"
                   width={800}
                   height={600}
                   unoptimized
@@ -113,7 +113,7 @@ export function UploadForm() {
             ) : (
               <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 text-center text-muted">
                 <ImageIcon className="h-10 w-10" />
-                <span className="text-xs">ตัวอย่าง HEIC แสดงไม่ได้ในเบราว์เซอร์<br />ระบบจะแปลงเป็น WebP ให้อัตโนมัติ</span>
+                <span className="text-xs">HEIC previews can't be shown in the browser<br />We'll convert it to WebP automatically</span>
               </div>
             )}
             <button
@@ -145,7 +145,7 @@ export function UploadForm() {
 
       <div className="flex flex-col gap-2">
         <label htmlFor="caption" className="text-sm font-medium text-foreground">
-          คำบรรยายภาพ
+          Caption
         </label>
         <textarea
           id="caption"
@@ -153,7 +153,7 @@ export function UploadForm() {
           required
           rows={3}
           maxLength={280}
-          placeholder="บอกเล่าเรื่องราวของรูปนี้…"
+          placeholder="Tell the story behind this photo…"
           className="resize-none rounded-[8px] border border-line bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent"
         />
       </div>
@@ -177,11 +177,11 @@ export function UploadForm() {
         className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md disabled:opacity-50"
       >
         {pending ? (
-          "กำลังอัปโหลด…"
+          "Uploading…"
         ) : (
           <>
             <UploadIcon className="h-4 w-4" />
-            อัปโหลดรูปภาพ
+            Upload photo
           </>
         )}
       </button>

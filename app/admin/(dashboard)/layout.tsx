@@ -5,7 +5,7 @@ import { adminLogoutAction } from "@/app/admin/login/actions";
 import { SidebarNav } from "@/components/admin/sidebar-nav";
 import { LogoutIcon } from "@/components/admin/icons";
 
-export const metadata = { title: "ผู้ดูแลระบบ · Terra Pride" };
+export const metadata = { title: "Admin · Terra Pride" };
 
 export default async function AdminLayout({
   children,
@@ -24,7 +24,7 @@ export default async function AdminLayout({
               Terra Pride
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              แผงผู้ดูแล
+              Admin panel
             </p>
           </div>
         </div>
@@ -34,7 +34,7 @@ export default async function AdminLayout({
         <div className="mt-auto flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
           <div className="min-w-0">
             <p className="text-xs text-zinc-400 dark:text-zinc-500">
-              เข้าสู่ระบบเป็น
+              Signed in as
             </p>
             <p className="truncate text-sm font-medium" title={session.email}>
               {session.email}
@@ -46,7 +46,7 @@ export default async function AdminLayout({
               className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               <LogoutIcon className="size-4" />
-              ออกจากระบบ
+              Sign out
             </button>
           </form>
         </div>

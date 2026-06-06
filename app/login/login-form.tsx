@@ -14,7 +14,7 @@ function SubmitButton({ label }: { label: string }) {
       disabled={pending}
       className="w-full rounded-[8px] bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md disabled:opacity-50"
     >
-      {pending ? "กำลังดำเนินการ…" : label}
+      {pending ? "Working…" : label}
     </button>
   );
 }
@@ -27,7 +27,7 @@ export function LoginForm() {
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="email" className="text-sm font-medium text-foreground">
-          อีเมล
+          Email
         </label>
         <input
           id="email"
@@ -45,7 +45,7 @@ export function LoginForm() {
       {onCodeStage && (
         <div className="flex flex-col gap-2">
           <label htmlFor="code" className="text-sm font-medium text-foreground">
-            รหัส OTP (ส่งไปที่อีเมลแล้ว)
+            OTP code (sent to your email)
           </label>
           <input
             id="code"
@@ -65,13 +65,13 @@ export function LoginForm() {
         <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
       )}
 
-      <SubmitButton label={onCodeStage ? "ยืนยันรหัส" : "ส่งรหัสเข้าสู่ระบบ"} />
+      <SubmitButton label={onCodeStage ? "Verify code" : "Send login code"} />
 
       {onCodeStage && (
         <p className="text-center text-xs text-zinc-500">
-          กรอกอีเมลผิด?{" "}
+          Wrong email?{" "}
           <a href="/login" className="underline hover:text-foreground">
-            เริ่มใหม่
+            Start over
           </a>
         </p>
       )}

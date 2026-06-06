@@ -20,7 +20,7 @@ export function WhitelistRemoveButton({
     startTransition(async () => {
       const res = await removeWhitelistAction(id);
       if (!res.ok) {
-        setError(res.error ?? "ลบไม่สำเร็จ");
+        setError(res.error ?? "Couldn't remove the email.");
         setConfirming(false);
       }
     });
@@ -38,7 +38,7 @@ export function WhitelistRemoveButton({
           disabled={pending}
           className="min-h-9 cursor-pointer rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
         >
-          {pending ? "กำลังลบ…" : "ยืนยันลบ"}
+          {pending ? "Removing…" : "Confirm"}
         </button>
         <button
           type="button"
@@ -46,7 +46,7 @@ export function WhitelistRemoveButton({
           disabled={pending}
           className="min-h-9 cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-500 transition hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
         >
-          ยกเลิก
+          Cancel
         </button>
       </div>
     );
@@ -56,11 +56,11 @@ export function WhitelistRemoveButton({
     <button
       type="button"
       onClick={() => setConfirming(true)}
-      aria-label={`ลบ ${email} ออกจาก whitelist`}
+      aria-label={`Remove ${email} from the whitelist`}
       className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 dark:hover:text-red-400"
     >
       <TrashIcon className="size-3.5" />
-      ลบ
+      Remove
     </button>
   );
 }

@@ -21,10 +21,10 @@ export default async function UploadPage() {
           Add to Gallery
         </p>
         <h1 className="font-display text-3xl font-semibold tracking-normal text-foreground">
-          อัปโหลดรูปภาพ
+          Upload a photo
         </h1>
         <p className="text-sm leading-6 text-muted">
-          เพิ่มภาพถ่ายของคุณเข้าสู่แกลเลอรี ระบบจะโหวตให้รูปของคุณโดยอัตโนมัติ
+          Add your photo to the gallery — it gets an automatic vote from you.
         </p>
       </div>
 
@@ -33,11 +33,11 @@ export default async function UploadPage() {
       ) : !session ? (
         <div className="rounded-[8px] border border-line bg-surface p-6 text-center shadow-sm">
           <p className="text-sm text-muted">
-            กรุณา{" "}
+            Please{" "}
             <Link href="/login" className="font-medium underline hover:text-foreground">
-              เข้าสู่ระบบ
+              sign in
             </Link>{" "}
-            ก่อนอัปโหลด
+            before uploading.
           </p>
         </div>
       ) : (
@@ -56,16 +56,16 @@ function ClosedState() {
         <LockIcon className="h-5 w-5" />
       </span>
       <h2 className="text-base font-semibold text-foreground">
-        ขณะนี้ปิดรับการอัปโหลด
+        Uploads are closed right now
       </h2>
       <p className="max-w-xs text-sm text-muted">
-        ผู้ดูแลยังไม่เปิดให้อัปโหลดรูปในขณะนี้ กรุณากลับมาใหม่ภายหลัง
+        The organizers haven't opened uploads yet. Please check back later.
       </p>
       <Link
         href="/"
         className="mt-2 inline-flex h-9 items-center rounded-[8px] bg-foreground px-4 text-[13px] font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
       >
-        กลับไปที่แกลเลอรี
+        Back to the gallery
       </Link>
     </div>
   );

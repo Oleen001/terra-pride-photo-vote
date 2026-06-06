@@ -318,10 +318,10 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     <div ref={wrapRef} className="force-gallery">
       <canvas ref={canvasRef} className="force-canvas" />
       <div className="force-zoom">
-        <button type="button" aria-label="ซูมเข้า" onClick={() => zoomBy(1.3)}>+</button>
-        <button type="button" aria-label="ซูมออก" onClick={() => zoomBy(1 / 1.3)}>−</button>
+        <button type="button" aria-label="Zoom in" onClick={() => zoomBy(1.3)}>+</button>
+        <button type="button" aria-label="Zoom out" onClick={() => zoomBy(1 / 1.3)}>−</button>
       </div>
-      <p className="force-hint">ลากเพื่อเลื่อน · เลื่อนล้อ/ปุ่มเพื่อซูม · แตะรูปเพื่อเปิด</p>
+      <p className="force-hint">Drag to pan · scroll or use buttons to zoom · tap a photo to open</p>
     </div>
   );
 }
