@@ -14,6 +14,7 @@ import type { GalleryPhoto } from "@/lib/photos";
 import { ImageIcon } from "@/components/icons";
 import { ThreeHeartButton } from "@/components/three-heart-button";
 import { ForceGallery } from "@/components/force-gallery";
+import { PhotoModal } from "@/components/photo-modal";
 import { unvoteAction, voteAction } from "@/app/actions/vote";
 import { deleteOwnPhotoAction, getActivePhotosAction } from "@/app/actions/photos";
 
@@ -26,13 +27,13 @@ type GalleryProps = {
 };
 
 const baseBoardLayouts = [
-  { x: 6, y: 7, w: 22, r: -7 },
-  { x: 33, y: 4, w: 18, r: 5 },
-  { x: 62, y: 8, w: 24, r: -2 },
-  { x: 16, y: 43, w: 19, r: 8 },
-  { x: 45, y: 38, w: 23, r: -9 },
-  { x: 75, y: 42, w: 17, r: 6 },
-  { x: 5, y: 76, w: 25, r: -3 },
+  { x: 12, y: 13, w: 21, r: -5 },
+  { x: 35, y: 8, w: 18, r: 4 },
+  { x: 62, y: 11, w: 23, r: -2 },
+  { x: 15, y: 43, w: 19, r: 7 },
+  { x: 45, y: 38, w: 23, r: -8 },
+  { x: 74, y: 43, w: 17, r: 5 },
+  { x: 8, y: 76, w: 24, r: -3 },
   { x: 39, y: 74, w: 18, r: 7 },
   { x: 68, y: 72, w: 23, r: -6 },
 ];
@@ -52,52 +53,13 @@ function createBoardLayouts(count: number) {
     const jitterX = ((index * 13) % 7) - 3;
     const jitterY = ((index * 17) % 9) - 4;
     return {
-      x: 4 + col * xStep + jitterX,
-      y: 5 + row * yStep + jitterY,
+      x: Math.min(86, Math.max(8, 6 + col * xStep + jitterX)),
+      y: Math.min(88, Math.max(10, 9 + row * yStep + jitterY)),
       w: cardWidth + (index % 3) * 1.2,
       r: ((index * 11) % 14) - 7,
     };
   });
 }
-
-const ownerActionsStyle: CSSProperties = {
-  position: "absolute",
-  bottom: 12,
-  right: 12,
-  display: "flex",
-  gap: 8,
-  zIndex: 4,
-};
-
-const deleteButtonStyle: CSSProperties = {
-  appearance: "none",
-  border: "1px solid rgba(244,63,107,0.55)",
-  background: "rgba(27,24,27,0.78)",
-  backdropFilter: "blur(6px)",
-  color: "#ff7d9c",
-  fontSize: 13,
-  fontWeight: 600,
-  lineHeight: 1,
-  padding: "8px 12px",
-  minHeight: 36,
-  borderRadius: 8,
-  cursor: "pointer",
-  transition: "background 180ms ease-out, color 180ms ease-out, border-color 180ms ease-out",
-};
-
-const deleteConfirmStyle: CSSProperties = {
-  ...deleteButtonStyle,
-  border: "1px solid #f43f6b",
-  background: "#f43f6b",
-  color: "#fff",
-};
-
-const deleteCancelStyle: CSSProperties = {
-  ...deleteButtonStyle,
-  border: "1px solid var(--line, #2c282c)",
-  background: "rgba(27,24,27,0.78)",
-  color: "var(--muted, #9b938f)",
-};
 
 export function Gallery({
   photos: initialPhotos,
@@ -380,43 +342,23 @@ export function Gallery({
       ) : (
         <section
           ref={boardRef}
-          className={`gallery-board ${selectedPhoto ? "is-zoomed" : ""}`}
+          className="gallery-board"
           onPointerMove={handleBoardPointerMove}
-          onClick={() => {
-            if (selectedPhoto) selectPhoto(null);
-          }}
         >
-      {selectedPhoto && (
-        <button
-          type="button"
-          className="board-zoom-out"
-          onClick={(event) => {
-            event.stopPropagation();
-            selectPhoto(null);
-          }}
-          aria-label="Zoom out to full board"
-          title="Zoom out"
-        >
-          −
-        </button>
-      )}
-
       <div className="gallery-board-canvas">
         {photos.map((photo, index) => {
           const slot = slotMap.get(photo.id) ?? slotMap.size + index;
           const layout = boardLayouts[slot % boardLayouts.length];
           const owner = isOwner(photo);
           const voted = owner || votedIds.has(photo.id);
-          const selected = selectedPhoto?.id === photo.id;
           const bursting = burstId === photo.id;
           const parallax = ((slot % 5) - 2) * 18;
+          const aboveFold = layout.y < 58;
 
           return (
             <article
               key={photo.id}
-              className={`board-photo ${selected ? "is-selected" : ""} ${
-                voted ? "is-liked" : ""
-              }`}
+              className={`board-photo ${voted ? "is-liked" : ""}`}
               style={{
                 "--board-x": `${layout.x}%`,
                 "--board-y": `${layout.y}%`,
@@ -425,7 +367,7 @@ export function Gallery({
                 "--scroll-shift": `${scrollShift * parallax}px`,
                 "--float-delay": `${slot * -0.7}s`,
                 "--float-duration": `${5.5 + (slot % 4) * 0.7}s`,
-                zIndex: selected ? 30 : slot + 1,
+                zIndex: slot + 1,
               } as CSSProperties}
               onClick={(event) => {
                 event.stopPropagation();
@@ -438,8 +380,9 @@ export function Gallery({
                   alt={photo.caption}
                   fill
                   quality={92}
+                  loading={aboveFold ? "eager" : "lazy"}
                   unoptimized
-                  sizes={selected ? "(max-width: 768px) 85vw, 620px" : "360px"}
+                  sizes="360px"
                   className="board-photo-image"
                 />
                 <div className="board-photo-shade" />
@@ -484,47 +427,6 @@ export function Gallery({
                     ))}
                   </div>
                 )}
-                {selected && owner && (
-                  <div style={ownerActionsStyle} onClick={(e) => e.stopPropagation()}>
-                    {confirmDeleteId === photo.id ? (
-                      <>
-                        <button
-                          type="button"
-                          style={deleteConfirmStyle}
-                          disabled={deletingId === photo.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(photo);
-                          }}
-                        >
-                          {deletingId === photo.id ? "Deleting…" : "Confirm delete"}
-                        </button>
-                        <button
-                          type="button"
-                          style={deleteCancelStyle}
-                          disabled={deletingId === photo.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDeleteId(null);
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        style={deleteButtonStyle}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setConfirmDeleteId(photo.id);
-                        }}
-                      >
-                        Delete photo
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
             </article>
           );
@@ -533,96 +435,25 @@ export function Gallery({
         </section>
       )}
 
-      {view === "graph" && selectedPhoto && (
-        <div className="graph-modal" onClick={() => selectPhoto(null)}>
-          <div className="graph-modal-card" onClick={(e) => e.stopPropagation()}>
-            <Image
-              src={selectedPhoto.imageUrl}
-              alt={selectedPhoto.caption}
-              fill
-              unoptimized
-              sizes="(max-width: 768px) 92vw, 620px"
-              className="graph-modal-img"
-            />
-            <button
-              type="button"
-              className="graph-modal-close"
-              aria-label="Close"
-              onClick={() => selectPhoto(null)}
-            >
-              ×
-            </button>
-            <div className="graph-modal-info">
-              <div className="min-w-0">
-                <h2>{selectedPhoto.caption}</h2>
-                <p>{selectedPhoto.uploaderName}</p>
-              </div>
-              <ThreeHeartButton
-                disabled={
-                  !loggedIn || !votingOpen || pendingIds.has(selectedPhoto.id) || isOwner(selectedPhoto)
-                }
-                liked={isOwner(selectedPhoto) || votedIds.has(selectedPhoto.id)}
-                label={
-                  isOwner(selectedPhoto)
-                    ? "Auto liked"
-                    : votedIds.has(selectedPhoto.id)
-                      ? "Liked"
-                      : "Like"
-                }
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const p = selectedPhoto;
-                  if (!loggedIn) {
-                    window.location.href = "/login";
-                    return;
-                  }
-                  if (isOwner(p) || !votingOpen || pendingIds.has(p.id)) return;
-                  if (votedIds.has(p.id)) commitUnvote(p);
-                  else commitVote(p);
-                }}
-              />
-            </div>
-            {isOwner(selectedPhoto) && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: 8,
-                  padding: "0 16px 16px",
-                }}
-              >
-                {confirmDeleteId === selectedPhoto.id ? (
-                  <>
-                    <button
-                      type="button"
-                      style={deleteConfirmStyle}
-                      disabled={deletingId === selectedPhoto.id}
-                      onClick={() => handleDelete(selectedPhoto)}
-                    >
-                      {deletingId === selectedPhoto.id ? "Deleting…" : "Confirm delete"}
-                    </button>
-                    <button
-                      type="button"
-                      style={deleteCancelStyle}
-                      disabled={deletingId === selectedPhoto.id}
-                      onClick={() => setConfirmDeleteId(null)}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    style={deleteButtonStyle}
-                    onClick={() => setConfirmDeleteId(selectedPhoto.id)}
-                  >
-                    Delete photo
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+      {selectedPhoto && (
+        <PhotoModal
+          photo={selectedPhoto}
+          liked={isOwner(selectedPhoto) || votedIds.has(selectedPhoto.id)}
+          owner={isOwner(selectedPhoto)}
+          loggedIn={loggedIn}
+          votingOpen={votingOpen}
+          votePending={pendingIds.has(selectedPhoto.id)}
+          confirmingDelete={confirmDeleteId === selectedPhoto.id}
+          deleting={deletingId === selectedPhoto.id}
+          onClose={() => selectPhoto(null)}
+          onToggleVote={(p) => {
+            if (votedIds.has(p.id)) commitUnvote(p);
+            else commitVote(p);
+          }}
+          onRequestDelete={(p) => setConfirmDeleteId(p.id)}
+          onCancelDelete={() => setConfirmDeleteId(null)}
+          onConfirmDelete={(p) => handleDelete(p)}
+        />
       )}
     </>
   );

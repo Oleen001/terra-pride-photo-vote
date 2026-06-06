@@ -33,7 +33,7 @@ export default async function AdminEmailLogsPage({
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Email logs</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Check whether OTP emails went out when a participant says they didn't receive one.
+          Check whether OTP emails went out when a participant says they didn&apos;t receive one.
         </p>
       </header>
 
