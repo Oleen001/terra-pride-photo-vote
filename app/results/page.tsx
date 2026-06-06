@@ -18,13 +18,16 @@ export default async function ResultsPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10 sm:py-16">
       <div className="mb-8 flex flex-col items-center gap-2 text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900">
+        <span className="grid h-12 w-12 place-items-center rounded-[8px] bg-foreground text-background shadow-sm">
           <TrophyIcon className="h-6 w-6" />
         </span>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-accent">
+          Results
+        </p>
+        <h1 className="font-display text-3xl font-semibold tracking-normal text-foreground">
           Top 10
         </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           ภาพถ่ายที่ได้รับโหวตสูงสุด
         </p>
       </div>
@@ -32,8 +35,8 @@ export default async function ResultsPage() {
       {!settings.revealResultsOpen ? (
         <NotRevealed />
       ) : photos.length === 0 ? (
-        <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-14 text-center dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="rounded-[8px] border border-line bg-surface px-6 py-14 text-center shadow-sm">
+          <p className="text-sm text-muted">
             ยังไม่มีรูปภาพที่จะจัดอันดับ
           </p>
         </div>
@@ -46,16 +49,16 @@ export default async function ResultsPage() {
 
 function NotRevealed() {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+    <div className="flex flex-col items-center gap-3 rounded-[8px] border border-line bg-surface px-6 py-16 text-center shadow-sm">
+      <h2 className="text-base font-semibold text-foreground">
         ยังไม่ประกาศผล
       </h2>
-      <p className="max-w-xs text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="max-w-xs text-sm text-muted">
         ผลโหวตจะถูกเปิดเผยเมื่อผู้ดูแลประกาศ Top 10 อย่างเป็นทางการ
       </p>
       <Link
         href="/"
-        className="mt-2 inline-flex h-9 items-center rounded-lg bg-zinc-900 px-4 text-[13px] font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="mt-2 inline-flex h-9 items-center rounded-[8px] bg-foreground px-4 text-[13px] font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
       >
         กลับไปที่แกลเลอรี
       </Link>

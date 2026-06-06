@@ -15,19 +15,22 @@ export async function SiteHeader() {
   ]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-background/80 backdrop-blur-md dark:border-zinc-800/70">
+    <header className="sticky top-0 z-40 border-b border-line/80 bg-background/86 shadow-[0_1px_0_rgba(255,255,255,0.55)_inset] backdrop-blur-xl">
+      <div className="h-0.5 bg-[linear-gradient(90deg,#e4345d,#f59e0b,#f6d84b,#159a6c,#1686d9,#7c3aed)]" />
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
         <Link
           href="/"
-          className="group flex items-center gap-2 text-sm font-semibold tracking-tight"
+          className="group flex shrink-0 items-center gap-2.5 text-sm font-semibold tracking-tight"
         >
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-zinc-900 text-[13px] font-bold text-white dark:bg-white dark:text-zinc-900">
-            T
+          <span className="grid h-8 w-8 place-items-center rounded-[8px] bg-[conic-gradient(from_180deg,#e4345d,#f59e0b,#f6d84b,#159a6c,#1686d9,#7c3aed,#e4345d)] p-px shadow-sm">
+            <span className="grid h-full w-full place-items-center rounded-[7px] bg-zinc-950 text-[13px] font-bold text-white">
+              T
+            </span>
           </span>
-          <span className="text-zinc-900 dark:text-zinc-50">Terra Pride</span>
+          <span className="font-display text-base text-foreground">Terra Pride</span>
         </Link>
 
-        <nav className="flex items-center gap-1 text-sm">
+        <nav className="flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <NavLink href="/">Gallery</NavLink>
           {settings.revealResultsOpen && <NavLink href="/results">Results</NavLink>}
 
@@ -36,19 +39,19 @@ export async function SiteHeader() {
               {settings.uploadOpen && (
                 <Link
                   href="/upload"
-                  className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 text-[13px] font-medium text-white transition-colors duration-200 hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-foreground px-3.5 text-[13px] font-semibold text-background shadow-sm transition duration-200 hover:translate-y-[-1px] hover:shadow-md"
                 >
                   <UploadIcon className="h-4 w-4" />
                   Upload
                 </Link>
               )}
-              <span className="ml-2 hidden max-w-[160px] truncate text-xs text-zinc-500 dark:text-zinc-400 sm:inline">
+              <span className="ml-2 hidden max-w-[160px] truncate text-xs text-muted sm:inline">
                 {session.email}
               </span>
               <form action={logoutAction}>
                 <button
                   type="submit"
-                  className="ml-1 inline-flex h-9 cursor-pointer items-center rounded-lg px-3 text-[13px] font-medium text-zinc-600 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  className="ml-1 inline-flex h-9 cursor-pointer items-center rounded-[8px] px-3 text-[13px] font-medium text-muted transition-colors duration-200 hover:bg-foreground/6 hover:text-foreground"
                 >
                   Logout
                 </button>
@@ -57,7 +60,7 @@ export async function SiteHeader() {
           ) : (
             <Link
               href="/login"
-              className="ml-1 inline-flex h-9 items-center rounded-lg bg-zinc-900 px-3.5 text-[13px] font-medium text-white transition-colors duration-200 hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="ml-1 inline-flex h-9 items-center rounded-[8px] bg-foreground px-3.5 text-[13px] font-semibold text-background shadow-sm transition duration-200 hover:translate-y-[-1px] hover:shadow-md"
             >
               Sign in
             </Link>
@@ -72,7 +75,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className="inline-flex h-9 items-center rounded-lg px-3 text-[13px] font-medium text-zinc-600 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+      className="inline-flex h-9 items-center rounded-[8px] px-3 text-[13px] font-medium text-muted transition-colors duration-200 hover:bg-foreground/6 hover:text-foreground"
     >
       {children}
     </Link>

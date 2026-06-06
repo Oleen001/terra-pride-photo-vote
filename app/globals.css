@@ -1,22 +1,30 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
+  --background: #fbfaf7;
+  --foreground: #201c1f;
+  --surface: #fffdf8;
+  --line: #e8e0d7;
+  --muted: #736b66;
+  --accent: #d92d62;
+  --accent-2: #097a72;
+  --gold: #c88a1f;
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-gold: var(--gold);
   --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-display);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #ededed;
-  }
 }
 
 * {
@@ -27,6 +35,385 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+body::before {
+  pointer-events: none;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 28%),
+    linear-gradient(240deg, color-mix(in srgb, var(--accent-2) 8%, transparent), transparent 30%),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--foreground) 3%, transparent) 0,
+      color-mix(in srgb, var(--foreground) 3%, transparent) 1px,
+      transparent 1px,
+      transparent 52px
+    );
+  opacity: 0.78;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.trace-card-three {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.94;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  transition: opacity 240ms ease;
+}
+
+.trace-card:hover .trace-card-three,
+.trace-card:focus-within .trace-card-three {
+  opacity: 1;
+}
+
+.photo-carousel {
+  overflow: hidden;
+  position: relative;
+  margin-inline: calc(50% - 50vw);
+  padding: 18px max(16px, calc(50vw - 664px)) 30px;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.photo-carousel-stage {
+  position: relative;
+  min-height: clamp(440px, 46vw, 580px);
+  perspective: 1300px;
+  transform-style: preserve-3d;
+}
+
+.carousel-card {
+  --carousel-x: 0px;
+  --carousel-z: 0px;
+  --carousel-ry: 0deg;
+  --carousel-rz: 0deg;
+  --carousel-scale: 1;
+  --carousel-opacity: 1;
+  --card-rx: 0deg;
+  --card-ry: 0deg;
+  cursor: grab;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(74vw, 500px);
+  aspect-ratio: 1 / 1.02;
+  opacity: var(--carousel-opacity);
+  transform:
+    translate(-50%, -50%)
+    translate3d(var(--carousel-x), 0, var(--carousel-z))
+    rotateY(var(--carousel-ry))
+    rotateZ(var(--carousel-rz))
+    scale(var(--carousel-scale));
+  transform-style: preserve-3d;
+  transition:
+    opacity 500ms ease,
+    transform 700ms cubic-bezier(0.21, 0.47, 0.32, 0.98);
+}
+
+.carousel-card:active {
+  cursor: grabbing;
+}
+
+.carousel-card-shell {
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(9, 122, 114, 0.2), transparent 32%),
+    linear-gradient(145deg, #242c32, #121212 72%);
+  box-shadow:
+    0 40px 90px rgba(20, 16, 18, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform:
+    rotateX(var(--card-rx))
+    rotateY(var(--card-ry));
+  transform-style: preserve-3d;
+  transition: transform 220ms cubic-bezier(0.21, 0.47, 0.32, 0.98);
+}
+
+.carousel-card-image {
+  object-fit: cover;
+  opacity: 0.42;
+  filter: saturate(0.86) contrast(1.08);
+  transform: scale(1.04);
+}
+
+.carousel-card-shade {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(13, 14, 15, 0.18), rgba(11, 11, 12, 0.76)),
+    radial-gradient(circle at 50% 46%, rgba(0, 168, 165, 0.2), transparent 30%);
+}
+
+.carousel-card-top {
+  position: absolute;
+  top: clamp(22px, 5vw, 42px);
+  left: clamp(22px, 5vw, 42px);
+  right: clamp(22px, 5vw, 42px);
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+.carousel-card-label {
+  font-size: clamp(14px, 2vw, 19px);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.carousel-card-coords {
+  margin-top: 12px;
+  max-width: 36ch;
+  font-size: clamp(10px, 1.3vw, 13px);
+  font-weight: 700;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.carousel-card-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 9px 12px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(11px, 1.4vw, 15px);
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.carousel-card-live span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #e53935;
+  box-shadow: 0 0 16px rgba(229, 57, 53, 0.88);
+}
+
+.carousel-card-trace {
+  position: absolute;
+  inset: 22% 12% 24%;
+  z-index: 2;
+  transform: translateZ(26px);
+}
+
+.carousel-card-copy {
+  position: absolute;
+  left: clamp(24px, 5vw, 44px);
+  right: clamp(24px, 5vw, 44px);
+  bottom: clamp(72px, 9vw, 104px);
+  z-index: 3;
+  transform: translateZ(38px);
+}
+
+.carousel-card-copy h2 {
+  overflow: hidden;
+  max-width: 100%;
+  color: #f5f4ee;
+  font-size: clamp(32px, 6vw, 50px);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 0.98;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.carousel-card-copy p {
+  overflow: hidden;
+  margin-top: 16px;
+  max-width: 44ch;
+  color: rgba(255, 255, 255, 0.56);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(13px, 2vw, 18px);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.carousel-card-action {
+  position: absolute;
+  right: clamp(18px, 4vw, 36px);
+  bottom: clamp(18px, 4vw, 34px);
+  z-index: 5;
+  transform: translateZ(48px);
+}
+
+.carousel-like {
+  position: relative;
+  display: inline-flex;
+  min-width: 122px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  backdrop-filter: blur(16px);
+}
+
+.carousel-like-hold {
+  --hold-progress: 0;
+  cursor: pointer;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.34);
+}
+
+.carousel-like-hold::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982);
+  opacity: 0.78;
+  transform: scaleX(var(--hold-progress));
+  transform-origin: left;
+  transition: transform 90ms linear;
+}
+
+.carousel-like-hold > * {
+  position: relative;
+  z-index: 1;
+}
+
+.carousel-like-heart {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.carousel-like-liked {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(90deg, #e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982);
+  color: white;
+  box-shadow: 0 0 24px rgba(255, 119, 214, 0.35);
+}
+
+.carousel-like-idle,
+.carousel-like-disabled {
+  background: rgba(0, 0, 0, 0.34);
+}
+
+.carousel-like-disabled {
+  opacity: 0.62;
+}
+
+.carousel-like.is-splashing::after {
+  content: "";
+  position: absolute;
+  inset: -32px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.9) 0 6%, transparent 7%),
+    conic-gradient(#e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982, #e40303);
+  opacity: 0;
+  animation: pride-splash 700ms ease-out;
+}
+
+.carousel-pride-aura {
+  pointer-events: none;
+  position: absolute;
+  inset: -26px;
+  z-index: 0;
+  border-radius: 16px;
+  background:
+    conic-gradient(from 90deg, #e40303, #ff8c00, #ffed00, #008026, #2443ff, #732982, #e40303);
+  filter: blur(30px);
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.carousel-card.is-liked .carousel-pride-aura {
+  opacity: 0.32;
+}
+
+.carousel-card.is-liked .carousel-card-shell {
+  box-shadow:
+    0 40px 100px rgba(20, 16, 18, 0.28),
+    0 0 46px rgba(255, 119, 214, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: -16px;
+}
+
+.carousel-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 18%, transparent);
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.carousel-dots .is-active {
+  background: var(--accent);
+  transform: scale(1.45);
+}
+
+@keyframes pride-splash {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.3) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8) rotate(120deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .photo-carousel {
+    padding-top: 0;
+  }
+
+  .photo-carousel-stage {
+    min-height: 620px;
+  }
+
+  .carousel-card {
+    width: min(82vw, 360px);
+    aspect-ratio: 0.78 / 1;
+  }
+
+  .carousel-card-copy {
+    bottom: 86px;
+  }
+
+  .carousel-card-action {
+    left: 20px;
+    right: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

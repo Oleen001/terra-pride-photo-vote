@@ -52,6 +52,7 @@ Terra Pride Photo Vote is a private photo voting website. Only whitelisted email
 - Email is shown as the photo owner.
 - Participant can upload more than one photo over time.
 - Participant uploads only 1 photo per upload action.
+- Participant can have up to 5 active uploaded photos.
 - Participant can delete their own photo.
 - Deleting a photo is a soft delete.
 
@@ -61,7 +62,7 @@ Terra Pride Photo Vote is a private photo voting website. Only whitelisted email
 - Upload requires authentication.
 - Upload accepts 1 photo per submission.
 - Caption is required.
-- Maximum image size is 10MB.
+- Maximum image size is 20MB.
 - Supported formats:
   - `jpg`
   - `jpeg`
@@ -258,7 +259,8 @@ revealResultsOpen
 - OTP email login with whitelist check.
 - Homepage gallery.
 - Upload 1 image with required caption.
-- Image size validation up to 10MB.
+- Image size validation up to 20MB.
+- Maximum 5 active uploaded photos per participant.
 - Auto-vote own uploaded photo.
 - Vote/unvote other photos.
 - Prevent owner from unvoting own photo.

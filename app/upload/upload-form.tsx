@@ -79,26 +79,26 @@ export function UploadForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">รูปภาพ</span>
+        <span className="text-sm font-medium text-foreground">รูปภาพ</span>
 
         {!fileName ? (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="group flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 text-center transition-colors duration-200 hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+            className="group flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[8px] border border-dashed border-line bg-background/70 text-center transition duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:bg-background"
           >
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-white text-zinc-400 shadow-sm transition-colors group-hover:text-zinc-600 dark:bg-zinc-800 dark:text-zinc-500">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-surface text-muted shadow-sm transition-colors group-hover:text-accent">
               <ImageIcon className="h-6 w-6" />
             </span>
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-foreground">
               เลือกรูปภาพ
             </span>
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+            <span className="text-xs text-muted">
               jpg, png, webp, heic · สูงสุด 20MB
             </span>
           </button>
         ) : (
-          <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="relative overflow-hidden rounded-[8px] border border-line bg-foreground/5">
             {preview ? (
               <div className="relative max-h-80 w-full">
                 <Image
@@ -111,7 +111,7 @@ export function UploadForm() {
                 />
               </div>
             ) : (
-              <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 text-center text-zinc-400 dark:text-zinc-500">
+              <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 text-center text-muted">
                 <ImageIcon className="h-10 w-10" />
                 <span className="text-xs">ตัวอย่าง HEIC แสดงไม่ได้ในเบราว์เซอร์<br />ระบบจะแปลงเป็น WebP ให้อัตโนมัติ</span>
               </div>
@@ -125,7 +125,7 @@ export function UploadForm() {
               <CloseIcon className="h-4 w-4" />
             </button>
             {fileName && (
-              <p className="truncate border-t border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              <p className="truncate border-t border-line bg-surface px-3 py-2 text-xs text-muted">
                 {fileName}
               </p>
             )}
@@ -144,7 +144,7 @@ export function UploadForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="caption" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="caption" className="text-sm font-medium text-foreground">
           คำบรรยายภาพ
         </label>
         <textarea
@@ -154,7 +154,7 @@ export function UploadForm() {
           rows={3}
           maxLength={280}
           placeholder="บอกเล่าเรื่องราวของรูปนี้…"
-          className="resize-none rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400"
+          className="resize-none rounded-[8px] border border-line bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent"
         />
       </div>
 
@@ -174,7 +174,7 @@ export function UploadForm() {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md disabled:opacity-50"
       >
         {pending ? (
           "กำลังอัปโหลด…"

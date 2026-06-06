@@ -12,7 +12,7 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+      className="w-full rounded-[8px] bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-sm transition hover:translate-y-[-1px] hover:shadow-md disabled:opacity-50"
     >
       {pending ? "กำลังดำเนินการ…" : label}
     </button>
@@ -26,7 +26,7 @@ export function LoginForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="email" className="text-sm font-medium text-foreground">
           อีเมล
         </label>
         <input
@@ -38,13 +38,13 @@ export function LoginForm() {
           defaultValue={state.email}
           autoComplete="email"
           placeholder="you@example.com"
-          className="rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-zinc-900 read-only:bg-zinc-100 read-only:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400 dark:read-only:bg-zinc-800"
+          className="rounded-[8px] border border-line bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent read-only:bg-foreground/5 read-only:text-muted"
         />
       </div>
 
       {onCodeStage && (
         <div className="flex flex-col gap-2">
-          <label htmlFor="code" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label htmlFor="code" className="text-sm font-medium text-foreground">
             รหัส OTP (ส่งไปที่อีเมลแล้ว)
           </label>
           <input
@@ -56,7 +56,7 @@ export function LoginForm() {
             required
             autoFocus
             placeholder="000000"
-            className="rounded-xl border border-zinc-300 bg-white px-4 py-3 text-center text-lg tracking-[0.5em] outline-none transition focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400"
+            className="rounded-[8px] border border-line bg-background px-4 py-3 text-center text-lg tracking-[0.5em] text-foreground outline-none transition focus:border-accent"
           />
         </div>
       )}
@@ -70,7 +70,7 @@ export function LoginForm() {
       {onCodeStage && (
         <p className="text-center text-xs text-zinc-500">
           กรอกอีเมลผิด?{" "}
-          <a href="/login" className="underline hover:text-zinc-700 dark:hover:text-zinc-300">
+          <a href="/login" className="underline hover:text-foreground">
             เริ่มใหม่
           </a>
         </p>

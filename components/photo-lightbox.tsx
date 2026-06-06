@@ -32,14 +32,17 @@ export function PhotoLightbox({
   onDeleted,
 }: PhotoLightboxProps) {
   const reduce = useReducedMotion();
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteState, setDeleteState] = useState<{
+    photoId: string;
+    confirm: boolean;
+    error: string | null;
+  }>({ photoId: "", confirm: false, error: null });
   const [deleting, startDelete] = useTransition();
+  const confirmDelete = photo ? deleteState.photoId === photo.id && deleteState.confirm : false;
+  const deleteError = photo && deleteState.photoId === photo.id ? deleteState.error : null;
 
   useEffect(() => {
     if (!photo) return;
-    setConfirmDelete(false);
-    setDeleteError(null);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -58,7 +61,11 @@ export function PhotoLightbox({
       if (res.ok) {
         onDeleted(photo.id);
       } else {
-        setDeleteError(res.error ?? "ลบไม่สำเร็จ");
+        setDeleteState({
+          photoId: photo.id,
+          confirm: true,
+          error: res.error ?? "ลบไม่สำเร็จ",
+        });
       }
     });
   }
@@ -89,14 +96,14 @@ export function PhotoLightbox({
           </button>
 
           <motion.div
-            className="relative z-10 flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-900 md:flex-row"
+            className="relative z-10 flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[8px] bg-surface shadow-2xl md:flex-row"
             initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 8 }}
             transition={{ type: "spring", stiffness: 280, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative flex min-h-[40vh] flex-1 items-center justify-center bg-zinc-100 md:max-h-[85vh] dark:bg-zinc-950">
+            <div className="relative flex min-h-[40vh] flex-1 items-center justify-center bg-foreground/5 md:max-h-[85vh]">
               <Image
                 src={photo.imageUrl}
                 alt={photo.caption}
@@ -108,12 +115,12 @@ export function PhotoLightbox({
               />
             </div>
 
-            <div className="flex w-full shrink-0 flex-col gap-5 p-6 md:w-80 md:border-l md:border-zinc-200 dark:md:border-zinc-800">
+            <div className="flex w-full shrink-0 flex-col gap-5 p-6 md:w-80 md:border-l md:border-line">
               <div className="flex flex-col gap-2">
-                <p className="text-base leading-relaxed text-zinc-900 dark:text-zinc-100">
+                <p className="text-base leading-relaxed text-foreground">
                   {photo.caption}
                 </p>
-                <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="truncate text-xs text-muted">
                   {photo.ownerEmail}
                 </p>
               </div>
@@ -130,19 +137,19 @@ export function PhotoLightbox({
                 />
 
                 {isOwner && (
-                  <div className="flex flex-col gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                  <div className="flex flex-col gap-2 border-t border-line pt-3">
                     {!confirmDelete ? (
                       <button
                         type="button"
-                        onClick={() => setConfirmDelete(true)}
-                        className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+                        onClick={() => setDeleteState({ photoId: photo.id, confirm: true, error: null })}
+                        className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-[8px] text-[13px] font-medium text-muted transition-colors duration-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
                       >
                         <TrashIcon className="h-4 w-4" />
                         Delete photo
                       </button>
                     ) : (
                       <div className="flex flex-col gap-2">
-                        <p className="text-[13px] text-zinc-600 dark:text-zinc-400">
+                        <p className="text-[13px] text-muted">
                           ลบรูปนี้? การลบนี้ย้อนกลับไม่ได้สำหรับคุณ
                         </p>
                         <div className="flex gap-2">
@@ -150,15 +157,15 @@ export function PhotoLightbox({
                             type="button"
                             disabled={deleting}
                             onClick={handleDelete}
-                            className="inline-flex h-9 flex-1 cursor-pointer items-center justify-center rounded-lg bg-red-600 text-[13px] font-medium text-white transition-colors duration-200 hover:bg-red-700 disabled:opacity-60"
+                            className="inline-flex h-9 flex-1 cursor-pointer items-center justify-center rounded-[8px] bg-red-600 text-[13px] font-medium text-white transition-colors duration-200 hover:bg-red-700 disabled:opacity-60"
                           >
                             {deleting ? "กำลังลบ…" : "ยืนยันลบ"}
                           </button>
                           <button
                             type="button"
                             disabled={deleting}
-                            onClick={() => setConfirmDelete(false)}
-                            className="inline-flex h-9 flex-1 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 text-[13px] font-medium text-zinc-700 transition-colors duration-200 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            onClick={() => setDeleteState({ photoId: photo.id, confirm: false, error: null })}
+                            className="inline-flex h-9 flex-1 cursor-pointer items-center justify-center rounded-[8px] border border-line text-[13px] font-medium text-foreground transition-colors duration-200 hover:bg-foreground/5"
                           >
                             ยกเลิก
                           </button>

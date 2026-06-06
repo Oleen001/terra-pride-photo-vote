@@ -156,8 +156,9 @@ Tasks:
 - Validate:
   - one file only
   - caption required
-  - file size <= 10MB
+  - file size <= 20MB
   - supported file type
+- Enforce maximum 5 active uploaded photos per participant.
 - Upload image to storage.
 - Create photo row.
 - Automatically create owner's vote for the new photo.
@@ -254,8 +255,9 @@ Functional checks:
 - Non-whitelisted email cannot log in.
 - Whitelisted email can receive OTP and log in.
 - Upload closed blocks upload.
-- Upload accepts valid photo under 10MB.
-- Upload rejects invalid file or over-10MB file.
+- Upload accepts valid photo under 20MB.
+- Upload rejects invalid file or over-20MB file.
+- Upload blocks the 6th active photo for the same participant.
 - Upload creates owner vote.
 - User can vote all photos.
 - User cannot vote same photo twice.
