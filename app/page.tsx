@@ -1,5 +1,6 @@
 import { getParticipantSession } from "@/lib/session";
 import { listActivePhotos } from "@/lib/photos";
+import { listPhrases } from "@/lib/phrases";
 import { getSettings } from "@/lib/settings";
 import { getVotedPhotoIds } from "@/lib/votes";
 import { Gallery } from "@/components/gallery";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const session = await getParticipantSession();
 
-  const [photos, settings, votedIds] = await Promise.all([
+  const [photos, settings, votedIds, phrases] = await Promise.all([
     listActivePhotos(),
     getSettings().catch(() => ({
       uploadOpen: false,
@@ -17,6 +18,7 @@ export default async function Home() {
       revealResultsOpen: false,
     })),
     session ? getVotedPhotoIds(session.userId) : Promise.resolve<string[]>([]),
+    listPhrases().catch(() => [] as string[]),
   ]);
 
   return (
@@ -27,6 +29,7 @@ export default async function Home() {
         votingOpen={settings.votingOpen}
         loggedIn={session !== null}
         currentUserId={session?.userId ?? null}
+        phrases={phrases}
       />
     </main>
   );

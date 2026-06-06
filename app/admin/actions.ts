@@ -9,12 +9,19 @@ import {
   addWhitelistEmail,
   removeWhitelistEmail,
 } from "@/lib/whitelist-admin";
+import { addPhrase, removePhrase } from "@/lib/phrases";
 import { adminSoftDeletePhoto, adminRestorePhoto } from "@/lib/photos";
 
 export type AdminActionState = { ok: boolean; error?: string };
 
 const photoIdSchema = z.string().uuid();
 const idSchema = z.string().uuid();
+
+const phraseSchema = z
+  .string()
+  .trim()
+  .min(1, "Phrase can't be empty.")
+  .max(60, "Phrase must be 60 characters or fewer.");
 
 const settingsSchema = z
   .object({
@@ -71,6 +78,40 @@ export async function removeWhitelistAction(
   await removeWhitelistEmail(parsed.data);
   revalidatePath("/admin/whitelist");
   revalidatePath("/admin");
+  return { ok: true };
+}
+
+/** Add a typewriter phrase. Admin only. */
+export async function addPhraseAction(
+  text: string,
+): Promise<AdminActionState> {
+  if (!(await getAdminSession())) return { ok: false, error: "unauthorized" };
+
+  const parsed = phraseSchema.safeParse(text);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  await addPhrase(parsed.data);
+  revalidatePath("/admin/phrases");
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** Remove a typewriter phrase by id. Admin only. */
+export async function removePhraseAction(
+  id: string,
+): Promise<AdminActionState> {
+  if (!(await getAdminSession())) return { ok: false, error: "unauthorized" };
+
+  const parsed = idSchema.safeParse(id);
+  if (!parsed.success) return { ok: false, error: "Invalid entry." };
+
+  await removePhrase(parsed.data);
+  revalidatePath("/admin/phrases");
+  revalidatePath("/admin");
+  revalidatePath("/");
   return { ok: true };
 }
 

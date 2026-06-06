@@ -4,12 +4,18 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { getParticipantSession } from "@/lib/session";
 import { softDeletePhoto, listActivePhotos, type GalleryPhoto } from "@/lib/photos";
+import { listPhrases } from "@/lib/phrases";
 
 export type DeletePhotoState = { ok: boolean; error?: string };
 
 /** Public read of active gallery photos — used for live polling (no vote counts). */
 export async function getActivePhotosAction(): Promise<GalleryPhoto[]> {
   return listActivePhotos();
+}
+
+/** Public read of typewriter phrases — used by the graph view center text. */
+export async function getPhrasesAction(): Promise<string[]> {
+  return listPhrases();
 }
 
 const photoIdSchema = z.string().uuid();
