@@ -3,9 +3,14 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { getParticipantSession } from "@/lib/session";
-import { softDeletePhoto } from "@/lib/photos";
+import { softDeletePhoto, listActivePhotos, type GalleryPhoto } from "@/lib/photos";
 
 export type DeletePhotoState = { ok: boolean; error?: string };
+
+/** Public read of active gallery photos — used for live polling (no vote counts). */
+export async function getActivePhotosAction(): Promise<GalleryPhoto[]> {
+  return listActivePhotos();
+}
 
 const photoIdSchema = z.string().uuid();
 

@@ -15,6 +15,7 @@ import { ImageIcon } from "@/components/icons";
 import { ThreeHeartButton } from "@/components/three-heart-button";
 import { ForceGallery } from "@/components/force-gallery";
 import { unvoteAction, voteAction } from "@/app/actions/vote";
+import { getActivePhotosAction } from "@/app/actions/photos";
 
 type GalleryProps = {
   photos: GalleryPhoto[];
@@ -71,8 +72,27 @@ export function Gallery({
   loggedIn,
   currentUserId,
 }: GalleryProps) {
-  const photos = initialPhotos;
+  const [photos, setPhotos] = useState(initialPhotos);
   const [view, setView] = useState<"board" | "graph">("board");
+
+  // Live polling: pull active photos every 8s so new uploads appear without a
+  // manual refresh (for the event TV). Only updates state when the set changed.
+  useEffect(() => {
+    const timer = window.setInterval(async () => {
+      try {
+        const fresh = await getActivePhotosAction();
+        setPhotos((prev) => {
+          if (fresh.length === prev.length && fresh.every((p, i) => p.id === prev[i]?.id)) {
+            return prev;
+          }
+          return fresh;
+        });
+      } catch {
+        /* ignore transient poll errors */
+      }
+    }, 8000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(() => new Set(initialVotedIds));
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
@@ -237,11 +257,8 @@ export function Gallery({
         <ForceGallery
           photos={photos}
           votedIds={votedIds}
-          votingOpen={votingOpen}
-          loggedIn={loggedIn}
           isOwner={isOwner}
-          onVote={commitVote}
-          onUnvote={commitUnvote}
+          onSelect={(p) => setSelectedId(p.id)}
         />
       ) : (
         <section
@@ -355,6 +372,59 @@ export function Gallery({
         })}
       </div>
         </section>
+      )}
+
+      {view === "graph" && selectedPhoto && (
+        <div className="graph-modal" onClick={() => setSelectedId(null)}>
+          <div className="graph-modal-card" onClick={(e) => e.stopPropagation()}>
+            <Image
+              src={selectedPhoto.imageUrl}
+              alt={selectedPhoto.caption}
+              fill
+              unoptimized
+              sizes="(max-width: 768px) 92vw, 620px"
+              className="graph-modal-img"
+            />
+            <button
+              type="button"
+              className="graph-modal-close"
+              aria-label="ปิด"
+              onClick={() => setSelectedId(null)}
+            >
+              ×
+            </button>
+            <div className="graph-modal-info">
+              <div className="min-w-0">
+                <h2>{selectedPhoto.caption}</h2>
+                <p>{uploaderName(selectedPhoto.ownerEmail)}</p>
+              </div>
+              <ThreeHeartButton
+                disabled={
+                  !loggedIn || !votingOpen || pendingIds.has(selectedPhoto.id) || isOwner(selectedPhoto)
+                }
+                liked={isOwner(selectedPhoto) || votedIds.has(selectedPhoto.id)}
+                label={
+                  isOwner(selectedPhoto)
+                    ? "Auto liked"
+                    : votedIds.has(selectedPhoto.id)
+                      ? "ถูกใจแล้ว"
+                      : "ถูกใจ"
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const p = selectedPhoto;
+                  if (!loggedIn) {
+                    window.location.href = "/login";
+                    return;
+                  }
+                  if (isOwner(p) || !votingOpen || pendingIds.has(p.id)) return;
+                  if (votedIds.has(p.id)) commitUnvote(p);
+                  else commitVote(p);
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
