@@ -257,8 +257,24 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
     }
     drawRef.current = draw;
 
+    // Same-pole magnet: the text node repels with a charge that scales with its
+    // live radius (wider phrase → stronger field → photos flee into a ring),
+    // while photos keep a modest charge. forceManyBody reads strength via this
+    // accessor only at (re)initialization, so we re-apply the force whenever the
+    // text radius changes (see applyText) to grow/shrink the field live.
+    const CHARGE_K = 17; // text strength ≈ -(r * K); tuned so a full phrase clears a wide ring
+    const PHOTO_CHARGE = -52;
+    const MAX_TEXT_CHARGE = -2600; // bound magnitude so nodes never explode / NaN
+    const chargeStrength = (d: ForceNode) =>
+      d.isText ? Math.max(MAX_TEXT_CHARGE, -(d.r * CHARGE_K)) : PHOTO_CHARGE;
+
     const sim = forceSimulation(nodes)
-      .force("charge", forceManyBody().strength(-86))
+      .force(
+        "charge",
+        forceManyBody<ForceNode>()
+          .strength(chargeStrength)
+          .distanceMax(Math.max(w, h) * 0.75), // clamp range so it can't shove photos off-canvas forever
+      )
       .force("center", forceCenter(w / 2, h / 2))
       // live radius read each tick so the growing text node carves out space;
       // text node gets extra padding so it shoves photos a little harder.
@@ -318,10 +334,20 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
         textRef.current = { shown: phrase.slice(0, charCount), full: phrase };
         const prevR = textNode.r;
         textNode.r = measureTextRadius();
-        // Only reheat (hard) when the collision radius actually changed, so the
-        // photos get a visible shove on each new/removed glyph but the sim stays
-        // calm during holds and equal-width keystrokes (no jitter).
-        if (Math.abs(textNode.r - prevR) > 0.5) reheat(0.5);
+        // React to each glyph: when the radius shifts (even slightly) re-apply
+        // forceManyBody so its strength accessor re-reads the new text radius,
+        // growing/shrinking the repulsion field live, then reheat for a visible
+        // shove. Threshold 0.2 keeps it responsive per keystroke without firing
+        // during holds / equal-width chars (no jitter).
+        if (Math.abs(textNode.r - prevR) > 0.2) {
+          sim.force(
+            "charge",
+            forceManyBody<ForceNode>()
+              .strength(chargeStrength)
+              .distanceMax(Math.max(sizeRef.current.w, sizeRef.current.h) * 0.75),
+          );
+          reheat(0.5);
+        }
       };
 
       const step = () => {
@@ -437,6 +463,12 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect }: ForceGalle
       sim.force("center", forceCenter(w / 2, h / 2));
       sim.force("x", forceX(w / 2).strength(0.022));
       sim.force("y", forceY(h / 2).strength(0.022));
+      sim.force(
+        "charge",
+        forceManyBody<ForceNode>()
+          .strength(chargeStrength)
+          .distanceMax(Math.max(w, h) * 0.75),
+      );
       textNode.fx = w / 2;
       textNode.fy = h / 2;
       reheat(0.3);
