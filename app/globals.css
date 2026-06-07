@@ -83,35 +83,9 @@ body[data-bg="gallery"]::after {
   background: color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
-/* Ambient "dragon" — a glowing rainbow trail that slithers across the
-   viewport every ~10s. z-index map:
-     -1  body::before (global dots) + body[data-bg=gallery]::after (board/graph
-         dot field — moved here from the containers so the dragon can glow over
-         the dots)
-      0  .dragon-bg (this)            ← glows OVER the dot field
-      1  app content wrapper (header, page, board/graph photos, canvas, text,
-         tabs, zoom, hint)            ← photos/cards/text sit ABOVE the dragon
-     60  .photo-modal                 ← modal sits above everything
-   A body-level fixed layer can't be threaded between a descendant's background
-   and that descendant's own children, so the dot field had to move to body
-   level (under the dragon) rather than the dragon moving up into the content
-   island. pointer-events none so it never intercepts taps. */
-.dragon-bg {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  mix-blend-mode: screen;
-  opacity: 0.85;
-}
-
-/* Keep all app content above the dragon layer without disturbing body::before
-   (which stays at -1). The dragon is the first body child; the header and the
-   page wrapper that follow it get lifted to z-index 1. */
-body > *:not(.dragon-bg) {
+/* Keep app content (header, page wrapper) above the body-level dot field
+   (body::before + body[data-bg="gallery"]::after, both z-index -1). */
+body > * {
   position: relative;
   z-index: 1;
 }
@@ -743,6 +717,71 @@ body > *:not(.dragon-bg) {
   margin: 0;
   font-size: 11px;
   color: var(--muted);
+}
+
+/* "Type your pride" composer floating at the bottom-center of the graph view. */
+.phrase-submit {
+  z-index: 3;
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: min(92vw, 460px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.38);
+}
+
+.phrase-submit-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.phrase-submit-row {
+  display: flex;
+  gap: 8px;
+}
+
+.phrase-submit-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.phrase-submit-btn {
+  white-space: nowrap;
+  width: auto;
+}
+
+.phrase-submit-help {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  min-height: 1em;
+}
+
+.phrase-submit-ok {
+  color: #3fbf6b;
+}
+
+.phrase-submit-err {
+  color: #ff6b6b;
+}
+
+@media (max-width: 480px) {
+  .phrase-submit-row {
+    flex-direction: column;
+  }
+  .force-hint {
+    display: none; /* declutter the bottom edge on phones when the composer shows */
+  }
 }
 
 .photo-modal {

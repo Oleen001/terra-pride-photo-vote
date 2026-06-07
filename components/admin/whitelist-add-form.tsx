@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { addWhitelistAction } from "@/app/admin/actions";
+import { BurstInput } from "@/components/burst-input";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -40,7 +41,7 @@ export function WhitelistAddForm() {
         Add an email to the whitelist
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <input
+        <BurstInput
           ref={inputRef}
           id="whitelist-email"
           name="email"
@@ -48,7 +49,8 @@ export function WhitelistAddForm() {
           required
           placeholder="name@example.com"
           autoComplete="off"
-          className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400"
+          wrapperClassName="flex-1"
+          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400"
         />
         <button
           type="submit"

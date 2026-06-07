@@ -14,6 +14,7 @@ import type { GalleryPhoto } from "@/lib/photos";
 import { ImageIcon } from "@/components/icons";
 import { ThreeHeartButton } from "@/components/three-heart-button";
 import { ForceGallery } from "@/components/force-gallery";
+import { PhraseSubmit } from "@/components/phrase-submit";
 import { PhotoModal } from "@/components/photo-modal";
 import { unvoteAction, voteAction } from "@/app/actions/vote";
 import { deleteOwnPhotoAction, getActivePhotosAction } from "@/app/actions/photos";
@@ -352,6 +353,7 @@ export function Gallery({
           isOwner={isOwner}
           onSelect={(p) => selectPhoto(p.id)}
           phrases={phrases}
+          footer={loggedIn ? <PhraseSubmit /> : null}
         />
       ) : (
         <section

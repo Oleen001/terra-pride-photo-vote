@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminLoginAction, type AdminLoginState } from "./actions";
+import { BurstInput } from "@/components/burst-input";
 
 const initialState: AdminLoginState = { email: "" };
 
@@ -28,14 +29,14 @@ export function AdminLoginForm() {
         <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Admin email
         </label>
-        <input
+        <BurstInput
           id="email"
           name="email"
           type="email"
           required
           defaultValue={state.email}
           autoComplete="email"
-          className="rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400"
+          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400"
         />
       </div>
       <div className="flex flex-col gap-2">

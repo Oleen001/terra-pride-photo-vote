@@ -59,3 +59,11 @@ export async function removePhrase(id: string): Promise<void> {
   const { error } = await db.from("typewriter_phrases").delete().eq("id", id);
   if (error) throw error;
 }
+
+/** Remove many phrases by id in one round-trip. No-op for an empty list. */
+export async function removePhrases(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const db = supabaseAdmin();
+  const { error } = await db.from("typewriter_phrases").delete().in("id", ids);
+  if (error) throw error;
+}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { uploadPhotoAction } from "@/app/upload/actions";
 import { UploadIcon, ImageIcon, CloseIcon } from "@/components/icons";
+import { BurstTextarea } from "@/components/burst-input";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif";
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -147,7 +148,7 @@ export function UploadForm() {
         <label htmlFor="caption" className="text-sm font-medium text-foreground">
           Caption
         </label>
-        <textarea
+        <BurstTextarea
           id="caption"
           name="caption"
           required

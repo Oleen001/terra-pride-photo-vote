@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { addPhraseAction } from "@/app/admin/actions";
+import { BurstInput } from "@/components/burst-input";
 
 const MAX_LEN = 60;
 
@@ -44,7 +45,7 @@ export function PhraseAddForm() {
         Add a typewriter phrase
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <input
+        <BurstInput
           ref={inputRef}
           id="phrase-text"
           name="text"
@@ -53,7 +54,8 @@ export function PhraseAddForm() {
           maxLength={MAX_LEN}
           placeholder="Capture the moment"
           autoComplete="off"
-          className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400"
+          wrapperClassName="flex-1"
+          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-400"
         />
         <button
           type="submit"

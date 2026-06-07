@@ -9,7 +9,7 @@ import {
   addWhitelistEmail,
   removeWhitelistEmail,
 } from "@/lib/whitelist-admin";
-import { addPhrase, removePhrase } from "@/lib/phrases";
+import { addPhrase, removePhrase, removePhrases } from "@/lib/phrases";
 import { adminSoftDeletePhoto, adminRestorePhoto } from "@/lib/photos";
 
 export type AdminActionState = { ok: boolean; error?: string };
@@ -109,6 +109,22 @@ export async function removePhraseAction(
   if (!parsed.success) return { ok: false, error: "Invalid entry." };
 
   await removePhrase(parsed.data);
+  revalidatePath("/admin/phrases");
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** Remove several typewriter phrases at once. Admin only. */
+export async function removePhrasesAction(
+  ids: string[],
+): Promise<AdminActionState> {
+  if (!(await getAdminSession())) return { ok: false, error: "unauthorized" };
+
+  const parsed = z.array(idSchema).min(1).max(500).safeParse(ids);
+  if (!parsed.success) return { ok: false, error: "Invalid selection." };
+
+  await removePhrases(parsed.data);
   revalidatePath("/admin/phrases");
   revalidatePath("/admin");
   revalidatePath("/");

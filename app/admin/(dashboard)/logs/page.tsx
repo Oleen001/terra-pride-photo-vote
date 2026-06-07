@@ -1,5 +1,6 @@
 import { listEmailLogs } from "@/lib/email-log";
 import { MailLogIcon } from "@/components/admin/icons";
+import { BurstInput } from "@/components/burst-input";
 
 export const metadata = { title: "Email logs · Terra Pride Admin" };
 
@@ -38,13 +39,14 @@ export default async function AdminEmailLogsPage({
       </header>
 
       <form method="get" className="flex flex-col gap-2 sm:flex-row">
-        <input
+        <BurstInput
           type="search"
           name="q"
           defaultValue={query}
           placeholder="Search by recipient email"
           aria-label="Search by recipient email"
-          className="min-h-11 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500"
+          wrapperClassName="flex-1"
+          className="min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500"
         />
         <button
           type="submit"
