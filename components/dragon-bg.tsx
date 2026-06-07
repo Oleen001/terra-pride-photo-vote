@@ -10,7 +10,7 @@ const VIEW_H = 1000;
 
 // One pass timing.
 const PASS_MS = 5200; // slither across the screen
-const IDLE_MS = 10000; // wait between passes
+const IDLE_MS = 1000; // wait between passes
 
 type Edge = "top" | "right" | "bottom" | "left";
 

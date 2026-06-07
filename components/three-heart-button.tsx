@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEventHandler } from "react";
+import { useCallback, useRef, useState, type CSSProperties, type MouseEvent, type MouseEventHandler } from "react";
 
 type ThreeHeartButtonProps = {
   disabled: boolean;
@@ -10,16 +10,48 @@ type ThreeHeartButtonProps = {
 };
 
 export function ThreeHeartButton({ disabled, liked, label, onClick }: ThreeHeartButtonProps) {
+  // Self-contained heart "firework". Firing it from inside the button means the
+  // burst shows everywhere the button is used (board, graph, modal) without the
+  // surrounding card having to render it. The button has isolation:isolate so
+  // .heart-burst (z-index 8, position:absolute inset:0) layers above the icon.
+  const [bursts, setBursts] = useState<number[]>([]);
+  const burstKey = useRef(0);
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      // Burst only when this tap is a *like* action (not unlike, not a disabled/
+      // owner/sign-in tap) — mirrors the gallery's commitVote-only burst.
+      if (!disabled && !liked) {
+        const key = burstKey.current++;
+        setBursts((prev) => [...prev, key]);
+        window.setTimeout(() => {
+          setBursts((prev) => prev.filter((k) => k !== key));
+        }, 1500);
+      }
+      onClick(event);
+    },
+    [disabled, liked, onClick],
+  );
+
   return (
     <button
       type="button"
       disabled={disabled}
       className={`three-heart-button ${liked ? "is-liked" : ""}`}
-      onClick={onClick}
+      onClick={handleClick}
       aria-label={label}
       title={label}
     >
       {liked ? <LikedHeartIcon /> : <HeartIcon />}
+      {bursts.map((key) => (
+        <span key={key} className="heart-burst" aria-hidden="true">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span key={i} style={{ "--i": i } as CSSProperties}>
+              ♥
+            </span>
+          ))}
+        </span>
+      ))}
     </button>
   );
 }

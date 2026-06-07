@@ -56,17 +56,46 @@ body::before {
   opacity: 0.5;
 }
 
+/* Gallery base dot field — moved OUT of the board/graph containers to a
+   body-level fixed layer so the ambient dragon (.dragon-bg, z-index 0) can
+   glow OVER the dots while photos/canvas/text (z-index 1, inside the content
+   wrapper) stay above the dragon. A body-level fixed element can't be threaded
+   between a descendant's background and that descendant's children, so the dot
+   field has to live below the wrapper instead. Scoped to the gallery page via
+   body[data-bg="gallery"] so other routes keep the plain background. Sits at
+   z-index -1 (with body::before) → under the dragon. */
+body[data-bg="gallery"]::after {
+  pointer-events: none;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 24% 18%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 28%),
+    radial-gradient(circle at 82% 64%, color-mix(in srgb, var(--accent-2) 9%, transparent), transparent 30%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.1) 0 0.85px, transparent 1.15px),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 96%, black), #080708);
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  background-size: auto, auto, 11px 11px, auto;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 /* Ambient "dragon" — a glowing rainbow trail that slithers across the
-   viewport behind all content every ~10s. Sits at z-index 0 so it paints
-   ABOVE body::before (-1, the dot/spotlight bg) but below the app content,
-   which is lifted to z-index 1 via the rule below. Previously this also sat
-   at z-index -1 alongside body::before, where the opaque body background /
-   shared layer could hide it. pointer-events none so it never intercepts
-   taps. */
+   viewport every ~10s. z-index map:
+     -1  body::before (global dots) + body[data-bg=gallery]::after (board/graph
+         dot field — moved here from the containers so the dragon can glow over
+         the dots)
+      0  .dragon-bg (this)            ← glows OVER the dot field
+      1  app content wrapper (header, page, board/graph photos, canvas, text,
+         tabs, zoom, hint)            ← photos/cards/text sit ABOVE the dragon
+     60  .photo-modal                 ← modal sits above everything
+   A body-level fixed layer can't be threaded between a descendant's background
+   and that descendant's own children, so the dot field had to move to body
+   level (under the dragon) rather than the dragon moving up into the content
+   island. pointer-events none so it never intercepts taps. */
 .dragon-bg {
   pointer-events: none;
   position: fixed;
@@ -131,9 +160,18 @@ body > *:not(.dragon-bg) {
    new fields drop in without re-deriving the style. Admin pages opt out. */
 .field-input {
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: var(--background);
+  /* Rainbow effect baked into the shared field: a padding-box fill over a
+     border-box gradient. At rest the border-box gradient is the neutral --line
+     color so the field looks plain; on hover/focus it becomes the pride
+     rainbow. Every participant-facing input/textarea/select that uses
+     .field-input gets this automatically (login email, OTP, upload caption,
+     and any future field). Works on <textarea> too since it's all box styling.
+     Admin pages opt out by not using .field-input. */
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    linear-gradient(90deg, var(--line), var(--line)) border-box;
   padding: 0.75rem 1rem; /* py-3 px-4 */
   font-size: 0.875rem; /* text-sm */
   color: var(--foreground);
@@ -148,13 +186,36 @@ body > *:not(.dragon-bg) {
   color: var(--muted);
 }
 
+/* Rainbow border on hover (subtle) and full rainbow + glow on focus/typing —
+   identical to the login email reference. :not(:read-only) keeps read-only
+   fields (e.g. the locked email at the OTP stage) looking inert. */
+.field-input:hover:not(:read-only):not(:disabled) {
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    linear-gradient(90deg, #e4345d, #f59e0b, #f6d84b, #159a6c, #1686d9, #7c3aed) border-box;
+  box-shadow: 0 0 18px rgba(244, 63, 107, 0.12);
+}
+
 .field-input:focus {
-  border-color: var(--accent);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    linear-gradient(90deg, #e4345d, #f59e0b, #f6d84b, #159a6c, #1686d9, #7c3aed) border-box;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.04),
+    0 0 26px rgba(244, 63, 107, 0.18),
+    0 0 34px rgba(22, 134, 217, 0.12);
 }
 
 .field-input:read-only {
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--foreground) 5%, var(--background)),
+      color-mix(in srgb, var(--foreground) 5%, var(--background))
+    ) padding-box,
+    linear-gradient(90deg, var(--line), var(--line)) border-box;
   color: var(--muted);
+  box-shadow: none;
 }
 
 .field-button {
@@ -187,21 +248,12 @@ body > *:not(.dragon-bg) {
   opacity: 0.5;
 }
 
+/* Kept as a no-op alias for backwards compatibility — the rainbow hover/focus
+   effect now lives in the shared .field-input class, so every front-end field
+   gets it automatically and this extra class is no longer required. New markup
+   should just use .field-input. */
 .login-rainbow-field {
-  background:
-    linear-gradient(var(--background), var(--background)) padding-box,
-    linear-gradient(90deg, var(--line), var(--line)) border-box;
-}
-
-.login-rainbow-field:focus {
-  border-color: transparent;
-  background:
-    linear-gradient(var(--background), var(--background)) padding-box,
-    linear-gradient(90deg, #e4345d, #f59e0b, #f6d84b, #159a6c, #1686d9, #7c3aed) border-box;
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.04),
-    0 0 26px rgba(244, 63, 107, 0.18),
-    0 0 34px rgba(22, 134, 217, 0.12);
+  /* intentionally empty — see .field-input */
 }
 
 .typing-burst {
@@ -250,21 +302,10 @@ body > *:not(.dragon-bg) {
   position: relative;
   margin-inline: calc(50% - 50vw);
   min-height: max(1120px, calc(158svh - 4rem));
-  background:
-    radial-gradient(circle at 24% 18%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 28%),
-    radial-gradient(circle at 82% 64%, color-mix(in srgb, var(--accent-2) 9%, transparent), transparent 30%),
-    radial-gradient(circle, rgba(255, 255, 255, 0.1) 0 0.85px, transparent 1.15px),
-    linear-gradient(135deg, color-mix(in srgb, var(--surface) 96%, black), #080708);
-  background-position:
-    0 0,
-    0 0,
-    0 0,
-    0 0;
-  background-size:
-    auto,
-    auto,
-    11px 11px,
-    auto;
+  /* Base dot field + gradient moved to body[data-bg="gallery"]::after so the
+     dragon glows through. Container stays transparent; only the cursor
+     spotlight (::before) and the photos paint here. */
+  background: transparent;
 }
 
 .gallery-board::before {
@@ -652,9 +693,9 @@ body > *:not(.dragon-bg) {
   height: calc(100svh - 4rem);
   min-height: 620px;
   overflow: hidden;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.08) 0 0.85px, transparent 1.15px) 0 0 / 11px 11px,
-    linear-gradient(135deg, color-mix(in srgb, var(--surface) 96%, black), #080708);
+  /* Base dot field + gradient moved to body[data-bg="gallery"]::after so the
+     dragon glows through. Container stays transparent. */
+  background: transparent;
 }
 
 .force-canvas {

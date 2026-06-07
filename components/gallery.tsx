@@ -121,10 +121,23 @@ export function Gallery({
     }, 8000);
     return () => window.clearInterval(timer);
   }, [ensureSlots]);
+
+  // Mark <body> while the gallery is mounted so the body-level dot field
+  // (body[data-bg="gallery"]::after) paints only on this page. The dot field
+  // lives at body level (under the dragon) instead of on the board/graph
+  // container so the ambient dragon can glow over the dots, under the photos.
+  useEffect(() => {
+    document.body.dataset.bg = "gallery";
+    return () => {
+      // Only clear if we're still the one that set it, so the dot field
+      // never leaks onto login/upload/admin after navigation.
+      if (document.body.dataset.bg === "gallery") delete document.body.dataset.bg;
+    };
+  }, []);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(() => new Set(initialVotedIds));
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
-  const [burstId, setBurstId] = useState<string | null>(null);
   const boardRef = useRef<HTMLElement | null>(null);
   const [scrollShift, setScrollShift] = useState(0);
   const boardLayouts = useMemo(() => createBoardLayouts(photos.length), [photos.length]);
@@ -190,8 +203,6 @@ export function Gallery({
 
       setVotedIds((prev) => new Set(prev).add(id));
       setPendingIds((prev) => new Set(prev).add(id));
-      setBurstId(id);
-      window.setTimeout(() => setBurstId(null), 1500);
 
       voteAction(id)
         .then((res) => {
@@ -354,7 +365,6 @@ export function Gallery({
           const layout = boardLayouts[slot % boardLayouts.length];
           const owner = isOwner(photo);
           const voted = owner || votedIds.has(photo.id);
-          const bursting = burstId === photo.id;
           const parallax = ((slot % 5) - 2) * 18;
           const aboveFold = layout.y < 58;
 
@@ -421,15 +431,6 @@ export function Gallery({
                     }}
                   />
                 </div>
-                {bursting && (
-                  <div className="heart-burst" aria-hidden="true">
-                    {Array.from({ length: 18 }).map((_, i) => (
-                      <span key={i} style={{ "--i": i } as CSSProperties}>
-                        ♥
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             </article>
           );

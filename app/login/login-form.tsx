@@ -96,7 +96,7 @@ export function LoginForm() {
             autoComplete="email"
             placeholder="you@example.com"
             onInput={(event) => triggerBurst(event, setEmailBurst, 7.2)}
-            className="field-input login-rainbow-field"
+            className="field-input"
           />
           <TypingBurst burst={emailBurst} />
         </div>
@@ -118,7 +118,7 @@ export function LoginForm() {
               autoFocus
               placeholder="000000"
               onInput={(event) => triggerBurst(event, setCodeBurst, 18)}
-              className="field-input login-rainbow-field text-center text-lg tracking-[0.5em]"
+              className="field-input text-center text-lg tracking-[0.5em]"
             />
             <TypingBurst burst={codeBurst} />
           </div>
