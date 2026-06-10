@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Terra Pride Photo Vote
 
 ## Getting Started
 
-First, run the development server:
+Create a local env file, then run the development server:
 
 ```bash
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+This project uses Next.js App Router and Tailwind CSS. The participant-facing UI supports light mode by default and a persisted dark-mode toggle in the header.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Running And Deploying
 
-## Learn More
+See [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md) for local, production, and temporary external preview options.
 
-To learn more about Next.js, take a look at the following resources:
+Short version:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Local: `npm run dev`
+- Production: Render service from `render.yaml`, branch `main`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+- `npm run dev` - start local Next dev server on `0.0.0.0`
+- `npm run build` - build production assets
+- `npm start` - run the built Next app
+- `npm run lint` - run ESLint
+- `npm run gen:admin-hash` - generate the admin password hash
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Required Env
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Copy [.env.example](.env.example) and fill the values for the environment you are running.

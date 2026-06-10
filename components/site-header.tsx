@@ -4,6 +4,7 @@ import { getParticipantSession } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
 import { logoutAction } from "@/app/login/actions";
 import { UploadIcon } from "@/components/icons";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export async function SiteHeader() {
   const [session, settings] = await Promise.all([
@@ -24,19 +25,30 @@ export async function SiteHeader() {
           className="group flex shrink-0 items-center gap-2.5 text-sm font-semibold tracking-tight"
         >
           <Image
-            src="/terra-logo-full.svg"
+            src="/terra-logo-full-light.svg"
             alt="Terra Pride"
             width={128}
             height={54}
             priority
             unoptimized
-            className="h-9 w-auto"
+            className="h-9 w-auto dark:hidden"
+          />
+          <Image
+            src="/terra-logo-full.svg"
+            alt=""
+            width={128}
+            height={54}
+            priority
+            unoptimized
+            aria-hidden="true"
+            className="hidden h-9 w-auto dark:block"
           />
         </Link>
 
         <nav className="flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <NavLink href="/">Gallery</NavLink>
           {settings.revealResultsOpen && <NavLink href="/results">Results</NavLink>}
+          <ThemeToggle />
 
           {session ? (
             <>

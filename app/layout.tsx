@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import {
   Fraunces,
   IBM_Plex_Sans_Thai,
@@ -102,6 +103,19 @@ export const metadata: Metadata = {
   },
 };
 
+const themeInitScript = `
+try {
+  var theme = localStorage.getItem("theme");
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+    document.documentElement.style.colorScheme = "dark";
+  } else {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.style.colorScheme = "light";
+  }
+} catch {}
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -110,8 +124,16 @@ export default function RootLayout({
   return (
     <html
       lang="th"
+      suppressHydrationWarning
       className={`${sans.variable} ${display.variable} ${geistMono.variable} ${typewriterFontVars} h-full antialiased`}
     >
+      <head>
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
+      </head>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
         <div className="flex flex-1 flex-col">{children}</div>

@@ -28,39 +28,19 @@ type GalleryProps = {
   phrases: string[];
 };
 
-const baseBoardLayouts = [
-  { x: 12, y: 13, w: 21, r: -5 },
-  { x: 35, y: 8, w: 18, r: 4 },
-  { x: 62, y: 11, w: 23, r: -2 },
-  { x: 15, y: 43, w: 19, r: 7 },
-  { x: 45, y: 38, w: 23, r: -8 },
-  { x: 74, y: 43, w: 17, r: 5 },
-  { x: 8, y: 76, w: 24, r: -3 },
-  { x: 39, y: 74, w: 18, r: 7 },
-  { x: 68, y: 72, w: 23, r: -6 },
-];
+const masonrySpans = [10, 13, 9, 12, 15, 11, 14, 10, 12, 16, 9, 13];
 
-function createBoardLayouts(count: number) {
-  if (count <= baseBoardLayouts.length) return baseBoardLayouts.slice(0, count);
+function pickAmbientZoomIds(photos: GalleryPhoto[], count: number): Set<string> {
+  if (photos.length <= count) return new Set(photos.map((photo) => photo.id));
 
-  const columns = count > 24 ? 6 : count > 14 ? 5 : 4;
-  const rows = Math.ceil(count / columns);
-  const cardWidth = count > 24 ? 12 : count > 14 ? 14 : 17;
-  const xStep = 92 / columns;
-  const yStep = 88 / rows;
-
-  return Array.from({ length: count }, (_, index) => {
-    const col = index % columns;
-    const row = Math.floor(index / columns);
-    const jitterX = ((index * 13) % 7) - 3;
-    const jitterY = ((index * 17) % 9) - 4;
-    return {
-      x: Math.min(86, Math.max(8, 6 + col * xStep + jitterX)),
-      y: Math.min(88, Math.max(10, 9 + row * yStep + jitterY)),
-      w: cardWidth + (index % 3) * 1.2,
-      r: ((index * 11) % 14) - 7,
-    };
-  });
+  const pool = photos.map((photo) => photo.id);
+  const picked = new Set<string>();
+  while (picked.size < count && pool.length > 0) {
+    const index = Math.floor(Math.random() * pool.length);
+    const [id] = pool.splice(index, 1);
+    if (id) picked.add(id);
+  }
+  return picked;
 }
 
 export function Gallery({
@@ -139,9 +119,8 @@ export function Gallery({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(() => new Set(initialVotedIds));
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
+  const [ambientZoomIds, setAmbientZoomIds] = useState<Set<string>>(() => new Set());
   const boardRef = useRef<HTMLElement | null>(null);
-  const [scrollShift, setScrollShift] = useState(0);
-  const boardLayouts = useMemo(() => createBoardLayouts(photos.length), [photos.length]);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -162,29 +141,57 @@ export function Gallery({
   );
 
   useEffect(() => {
-    let ticking = false;
-    const updateScrollShift = () => {
-      ticking = false;
-      const rect = boardRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const travel = Math.max(rect.height - window.innerHeight, 1);
-      const progress = Math.min(Math.max(-rect.top / travel, 0), 1);
-      setScrollShift(progress);
+    if (view !== "board" || photos.length === 0) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const pickNext = () => setAmbientZoomIds(pickAmbientZoomIds(photos, 3));
+    const firstTimer = window.setTimeout(pickNext, 0);
+    const timer = window.setInterval(pickNext, 3600);
+    return () => {
+      window.clearTimeout(firstTimer);
+      window.clearInterval(timer);
     };
-    const handleScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(updateScrollShift);
+  }, [photos, view]);
+
+  useEffect(() => {
+    if (view !== "board") return;
+
+    let frame = 0;
+    const updateParallax = () => {
+      frame = 0;
+      const board = boardRef.current;
+      if (!board) return;
+      const cards = board.querySelectorAll<HTMLElement>(".board-photo");
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        cards.forEach((card) => card.style.setProperty("--image-shift", "0px"));
+        return;
+      }
+      const viewportCenter = window.innerHeight / 2;
+      const strength = Math.min(window.innerHeight * 0.035, 28);
+
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        const cardCenter = rect.top + rect.height / 2;
+        const ratio = Math.max(-1, Math.min(1, (cardCenter - viewportCenter) / window.innerHeight));
+        const depth = Number.parseFloat(getComputedStyle(card).getPropertyValue("--parallax-depth")) || 1;
+        card.style.setProperty("--image-shift", `${(-ratio * strength * depth).toFixed(2)}px`);
+      });
     };
 
-    updateScrollShift();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
+    const requestUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateParallax);
     };
-  }, []);
+
+    updateParallax();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+    };
+  }, [photos.length, view]);
 
   const handleBoardPointerMove = useCallback((event: ReactPointerEvent<HTMLElement>) => {
     const board = boardRef.current;
@@ -364,24 +371,22 @@ export function Gallery({
       <div className="gallery-board-canvas">
         {photos.map((photo, index) => {
           const slot = slotMap.get(photo.id) ?? slotMap.size + index;
-          const layout = boardLayouts[slot % boardLayouts.length];
           const owner = isOwner(photo);
           const voted = owner || votedIds.has(photo.id);
-          const parallax = ((slot % 5) - 2) * 18;
-          const aboveFold = layout.y < 58;
+          const aboveFold = slot < 10;
+          const masonrySpan = masonrySpans[slot % masonrySpans.length];
+          const isAmbientZoom = ambientZoomIds.has(photo.id);
+          const zoomDelay = isAmbientZoom ? Array.from(ambientZoomIds).indexOf(photo.id) * 420 : 0;
+          const parallaxDepth = 0.65 + ((slot * 37) % 9) * 0.09;
 
           return (
             <article
               key={photo.id}
-              className={`board-photo ${voted ? "is-liked" : ""}`}
+              className={`board-photo ${voted ? "is-liked" : ""} ${isAmbientZoom ? "is-ambient-zoom" : ""}`}
               style={{
-                "--board-x": `${layout.x}%`,
-                "--board-y": `${layout.y}%`,
-                "--board-w": `${layout.w}%`,
-                "--board-r": `${layout.r}deg`,
-                "--scroll-shift": `${scrollShift * parallax}px`,
-                "--float-delay": `${slot * -0.7}s`,
-                "--float-duration": `${5.5 + (slot % 4) * 0.7}s`,
+                "--masonry-span": masonrySpan,
+                "--zoom-delay": `${zoomDelay}ms`,
+                "--parallax-depth": parallaxDepth.toFixed(2),
                 zIndex: slot + 1,
               } as CSSProperties}
               onClick={(event) => {

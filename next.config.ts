@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
+  turbopack: {
+    root: projectRoot,
+  },
   serverExternalPackages: ["sharp", "heic-convert"],
   // We run `tsc` locally — skip type-check during build to keep memory/time low.
   typescript: { ignoreBuildErrors: true },

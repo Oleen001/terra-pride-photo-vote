@@ -105,6 +105,13 @@ const TYPE_MS = [70, 110] as const;
 const DELETE_MS = 42;
 const HOLD_MS = 2500;
 const GAP_MS = 360;
+const WIDTH_CACHE_DIRTY = "__terra_width_cache_dirty__";
+
+function initialGraphScale(w: number) {
+  if (w < 430) return 0.62;
+  if (w < 640) return 0.72;
+  return 0.85;
+}
 
 function shuffled<T>(arr: T[]): T[] {
   const out = arr.slice();
@@ -319,7 +326,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect, phrases, foo
       twStyle.caretGrad = cg;
 
       // new font ⇒ char widths change; force measure() to recompute next call.
-      widthCache.text = " ";
+      widthCache.text = WIDTH_CACHE_DIRTY;
     };
     setPhraseStyle(textRef.current.full);
 
@@ -417,13 +424,8 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect, phrases, foo
       measure(text);
       const tw = widthCache.total;
       let cx = -tw / 2; // left edge of the centered phrase
-      // Soft DARK drop shadow (not a colored glow) for legibility over the
-      // bright photos. Shadow + the phrase gradient fill are constant across
-      // chars, so set them once before the loop.
-      ctx.shadowColor = "rgba(0,0,0,0.55)";
-      ctx.shadowBlur = 6;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 2;
+      // Keep the typewriter text crisp: the graph already has enough image
+      // contrast behind it, and shadows make the wording feel muddy on mobile.
       ctx.fillStyle = twStyle.grad ?? "#ffffff";
       for (let i = 0; i < text.length; i++) {
         const ch = text[i];
@@ -431,18 +433,12 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect, phrases, foo
         if (ch !== " ") ctx.fillText(ch, cx, 0);
         cx += cw;
       }
-      // reset shadow before the caret draws its own
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
 
       // blinking caret — full cap height (≈ font size), aligned to the right end
       // of the text. Vertical gradient using the phrase's 2-color pair.
       const blinkOn = Math.floor(Date.now() / 530) % 2 === 0;
       if (blinkOn) {
         const caretX = tw / 2 + 6;
-        ctx.shadowColor = "rgba(0,0,0,0.45)";
-        ctx.shadowBlur = 8;
         ctx.fillStyle = twStyle.caretGrad ?? "#ffffff";
         ctx.fillRect(caretX, -caretH / 2, 4, caretH);
       }
@@ -607,7 +603,13 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect, phrases, foo
       });
     zoomRef.current = zoomB;
     select(canvas).call(zoomB);
-    select(canvas).call(zoomB.transform, zoomIdentity.scale(0.85));
+    const initialScale = initialGraphScale(w);
+    select(canvas).call(
+      zoomB.transform,
+      zoomIdentity
+        .translate((w * (1 - initialScale)) / 2, (h * (1 - initialScale)) / 2)
+        .scale(initialScale),
+    );
 
     const toWorld = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect();
@@ -683,6 +685,13 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect, phrases, foo
       );
       // re-pin every glyph to the new center / re-measured baseline width
       rebuildGlyphs(0.3);
+      const scale = initialGraphScale(w);
+      select(canvas).call(
+        zoomB.transform,
+        zoomIdentity
+          .translate((w * (1 - scale)) / 2, (h * (1 - scale)) / 2)
+          .scale(scale),
+      );
     };
     window.addEventListener("resize", onResize);
 
@@ -758,7 +767,7 @@ export function ForceGallery({ photos, votedIds, isOwner, onSelect, phrases, foo
   };
 
   return (
-    <div ref={wrapRef} className="force-gallery">
+    <div ref={wrapRef} className={`force-gallery ${footer ? "has-footer" : ""}`}>
       <canvas ref={canvasRef} className="force-canvas" />
       <div className="force-zoom">
         <button type="button" aria-label="Zoom in" onClick={() => zoomBy(1.3)}>+</button>

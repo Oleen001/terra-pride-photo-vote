@@ -2,6 +2,25 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  --background: #f7f5f2;
+  --foreground: #1b171b;
+  --surface: #fffdf9;
+  --line: #dfd7d0;
+  --muted: #736a64;
+  --accent: #f43f6b;
+  --accent-2: #0f9488;
+  --gold: #b47a1c;
+  --board-card-bg: #151316;
+  --board-card-shadow: 0 20px 46px rgba(39, 32, 24, 0.2);
+  --board-card-active-shadow: 0 24px 60px rgba(39, 32, 24, 0.26);
+  --board-photo-shade: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.36) 48%, rgba(255, 255, 255, 0.86) 100%);
+  --board-photo-shade-height: clamp(96px, 46%, 150px);
+  --board-photo-title: #1b171b;
+  --board-photo-meta: rgba(27, 23, 27, 0.66);
+  color-scheme: light;
+}
+
+.dark {
   --background: #100d10;
   --foreground: #f4f1ee;
   --surface: #1b181b;
@@ -10,6 +29,17 @@
   --accent: #f43f6b;
   --accent-2: #19c0ad;
   --gold: #d8a23a;
+  --board-card-bg: linear-gradient(145deg, #242c32, #121212 72%);
+  --board-card-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --board-card-active-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --board-photo-shade: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.28) 48%, rgba(0, 0, 0, 0.76) 100%);
+  --board-photo-shade-height: clamp(96px, 46%, 150px);
+  --board-photo-title: #ffffff;
+  --board-photo-meta: rgba(255, 255, 255, 0.66);
   color-scheme: dark;
 }
 
@@ -73,8 +103,8 @@ body[data-bg="gallery"]::after {
   background:
     radial-gradient(circle at 24% 18%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 28%),
     radial-gradient(circle at 82% 64%, color-mix(in srgb, var(--accent-2) 9%, transparent), transparent 30%),
-    radial-gradient(circle, rgba(255, 255, 255, 0.1) 0 0.85px, transparent 1.15px),
-    linear-gradient(135deg, color-mix(in srgb, var(--surface) 96%, black), #080708);
+    radial-gradient(circle, color-mix(in srgb, var(--foreground) 9%, transparent) 0 0.85px, transparent 1.15px),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, var(--background)), var(--background));
   background-position: 0 0, 0 0, 0 0, 0 0;
   background-size: auto, auto, 11px 11px, auto;
 }
@@ -252,7 +282,6 @@ body > * {
   background-size: 220% 100%;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 12px rgba(244, 63, 107, 0.38));
   font-weight: 800;
   animation: typing-burst-impact 1.5s cubic-bezier(0.19, 1, 0.22, 1) both;
 }
@@ -263,7 +292,6 @@ body > * {
   height: 5px;
   border-radius: 999px;
   background: linear-gradient(135deg, #f6d84b, #19c0ad, #e4345d);
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.36);
   animation: typing-splash 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -275,7 +303,8 @@ body > * {
   overflow: hidden;
   position: relative;
   margin-inline: calc(50% - 50vw);
-  min-height: max(1120px, calc(158svh - 4rem));
+  min-height: calc(100svh - 4rem);
+  padding-block: clamp(88px, 7vw, 120px) clamp(72px, 7vw, 112px);
   /* Base dot field + gradient moved to body[data-bg="gallery"]::after so the
      dragon glows through. Container stays transparent; only the cursor
      spotlight (::before) and the photos paint here. */
@@ -288,7 +317,7 @@ body > * {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.82) 0 0.85px, transparent 1.2px);
+  background: radial-gradient(circle, color-mix(in srgb, var(--foreground) 32%, transparent) 0 0.85px, transparent 1.2px);
   background-size: 11px 11px;
   mask-image: radial-gradient(
     circle at var(--cursor-x) var(--cursor-y),
@@ -301,31 +330,29 @@ body > * {
 }
 
 .gallery-board-canvas {
-  position: absolute;
-  inset: 0;
-  min-width: 100%;
-  min-height: 100%;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(1180px, calc(100vw - clamp(24px, 7vw, 104px)));
+  margin-inline: auto;
+  grid-auto-flow: dense;
+  grid-auto-rows: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 17vw, 215px), 1fr));
+  gap: clamp(12px, 1.6vw, 20px);
 }
 
 .board-photo {
-  --board-x: 0%;
-  --board-y: 0%;
-  --board-w: 20%;
-  --board-r: 0deg;
+  --masonry-span: 32;
   --hold-progress: 0;
-  --scroll-shift: 0px;
-  --float-delay: 0s;
-  --float-duration: 6s;
+  --image-scale: 1.07;
+  --image-shift: 0px;
+  --parallax-depth: 1;
+  --zoom-delay: 0ms;
   cursor: zoom-in;
-  position: absolute;
-  left: var(--board-x);
-  top: var(--board-y);
-  width: max(170px, var(--board-w));
-  aspect-ratio: 1 / 1.18;
-  animation: board-card-drift var(--float-duration) ease-in-out infinite;
-  animation-delay: var(--float-delay);
-  transform: translate3d(0, var(--scroll-shift), 0) rotate(var(--board-r));
-  transform-origin: center;
+  position: relative;
+  grid-row-end: span var(--masonry-span);
+  min-height: 0;
+  width: 100%;
   transition: transform 480ms cubic-bezier(0.21, 0.47, 0.32, 0.98);
 }
 
@@ -333,12 +360,10 @@ body > * {
   overflow: hidden;
   position: relative;
   height: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 0;
   border-radius: 8px;
-  background: linear-gradient(145deg, #242c32, #121212 72%);
-  box-shadow:
-    0 26px 70px rgba(0, 0, 0, 0.46),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: var(--board-card-bg);
+  box-shadow: var(--board-card-shadow);
   transition:
     transform 220ms ease,
     box-shadow 260ms ease;
@@ -348,29 +373,39 @@ body > * {
   transform: translateY(-4px) scale(1.02);
 }
 
+.board-photo:hover {
+  --image-scale: 1.12;
+}
+
+.board-photo.is-ambient-zoom {
+  --image-scale: 1.16;
+}
+
 .board-photo.is-charging .board-photo-shell {
   animation: card-crack-shake 95ms infinite linear;
-  box-shadow:
-    0 28px 80px rgba(0, 0, 0, 0.56),
-    0 0 0 1px rgba(244, 63, 107, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--board-card-active-shadow);
 }
 
 .board-photo-image {
   object-fit: cover;
   filter: saturate(1.04) contrast(1.02);
-  transform: scale(1.02);
+  transform: translate3d(0, var(--image-shift), 0) scale(var(--image-scale));
+  transform-origin: center;
+  transition: transform 2400ms cubic-bezier(0.16, 1, 0.3, 1) var(--zoom-delay);
+  will-change: transform;
 }
 
 .board-photo-shade {
   pointer-events: none;
   position: absolute;
-  inset: 0;
+  inset: auto 0 0;
   z-index: 1;
-  background:
-    linear-gradient(180deg, transparent 34%, rgba(0, 0, 0, 0.48) 66%, rgba(0, 0, 0, 0.88) 100%),
-    radial-gradient(circle at 50% 50%, transparent, rgba(0, 0, 0, 0.3));
+  height: var(--board-photo-shade-height);
+  overflow: hidden;
+  background: var(--board-photo-shade);
 }
+
+
 
 .board-photo-copy {
   position: absolute;
@@ -382,7 +417,7 @@ body > * {
 
 .board-photo-copy h2 {
   overflow: hidden;
-  color: white;
+  color: var(--board-photo-title);
   font-size: clamp(12px, 1.25vw, 18px);
   font-weight: 800;
   letter-spacing: 0;
@@ -394,7 +429,7 @@ body > * {
 .board-photo-copy p {
   overflow: hidden;
   margin-top: 5px;
-  color: rgba(255, 255, 255, 0.66);
+  color: var(--board-photo-meta);
   font-size: clamp(9px, 0.9vw, 11px);
   font-weight: 600;
   text-overflow: ellipsis;
@@ -612,7 +647,10 @@ body > * {
   margin: 18px auto 10px;
   padding: 4px;
   border-radius: 100px;
-  background: #181818;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  box-shadow: 0 16px 42px color-mix(in srgb, var(--foreground) 10%, transparent);
+  backdrop-filter: blur(14px);
 }
 
 .view-tabs button {
@@ -622,18 +660,18 @@ body > * {
   border: none;
   border-radius: 100px;
   background: transparent;
-  color: #c0c0c0;
+  color: var(--muted);
   cursor: pointer;
   transition: color 200ms ease, background 200ms ease, box-shadow 240ms ease;
 }
 
 .view-tabs button.is-active {
-  color: #fff;
-  background-color: #000;
+  color: var(--foreground);
+  background-color: var(--background);
   background-size: 200% 100%;
   box-shadow:
-    0 0 10px rgba(90, 178, 255, 0.55),
-    0 2px 12px rgba(0, 0, 0, 0.3);
+    0 0 10px color-mix(in srgb, var(--accent-2) 32%, transparent),
+    0 2px 12px color-mix(in srgb, var(--foreground) 12%, transparent);
 }
 
 
@@ -644,7 +682,7 @@ body > * {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0 0.9px, transparent 1.2px);
+  background: radial-gradient(circle, color-mix(in srgb, var(--foreground) 30%, transparent) 0 0.9px, transparent 1.2px);
   background-size: 11px 11px;
   mask-image: radial-gradient(
     circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
@@ -698,7 +736,7 @@ body > * {
   height: 42px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: rgba(20, 18, 20, 0.72);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
   backdrop-filter: blur(10px);
   color: var(--foreground);
   font-size: 20px;
@@ -747,6 +785,7 @@ body > * {
 
 .phrase-submit-row {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
@@ -756,8 +795,91 @@ body > * {
 }
 
 .phrase-submit-btn {
-  white-space: nowrap;
-  width: auto;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: transform 160ms ease, opacity 180ms ease;
+}
+
+.phrase-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.phrase-submit-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.9, 1.08);
+}
+
+.phrase-submit-btn:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.phrase-submit-btn.is-success {
+  background: transparent;
+  animation: send-impact 520ms cubic-bezier(0.18, 1.45, 0.25, 1) both;
+}
+
+.phrase-submit-send-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.2));
+}
+
+.send-icon-streamline {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.send-icon-hover,
+.send-icon-success {
+  opacity: 0;
+}
+
+.phrase-submit-btn:hover:not(:disabled) .send-icon-base {
+  opacity: 0;
+}
+
+.phrase-submit-btn:hover:not(:disabled) .send-icon-hover {
+  opacity: 1;
+  transform: translate(0.4px, -0.4px) rotate(-2deg);
+}
+
+.phrase-submit-btn.is-success .phrase-submit-send-icon {
+  animation: send-flight 680ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.phrase-submit-btn.is-success .send-icon-base,
+.phrase-submit-btn.is-success .send-icon-hover {
+  opacity: 0;
+}
+
+.phrase-submit-btn.is-success .send-icon-success {
+  opacity: 1;
+}
+
+.phrase-submit-impact {
+  pointer-events: none;
+  position: absolute;
+  inset: 7px;
+  border-radius: 999px;
+  opacity: 0;
+}
+
+.phrase-submit-btn.is-success .phrase-submit-impact {
+  animation: send-splash 620ms ease-out both;
 }
 
 .phrase-submit-help {
@@ -776,9 +898,36 @@ body > * {
 }
 
 @media (max-width: 480px) {
-  .phrase-submit-row {
-    flex-direction: column;
+  .phrase-submit {
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    width: min(94vw, 420px);
+    gap: 4px;
+    padding: 8px;
+    border-radius: 16px;
   }
+
+  .phrase-submit-row {
+    gap: 8px;
+  }
+
+  .phrase-submit-btn {
+    width: 46px;
+    height: 46px;
+  }
+
+  .phrase-submit-send-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .phrase-submit-help {
+    display: none;
+  }
+
+  .force-gallery.has-footer .force-zoom {
+    display: none;
+  }
+
   .force-hint {
     display: none; /* declutter the bottom edge on phones when the composer shows */
   }
@@ -798,16 +947,18 @@ body > * {
 
 .photo-modal-card {
   position: relative;
-  width: min(620px, 92vw);
-  aspect-ratio: 1 / 1.12;
+  width: min(92vw, calc(100svh - 48px), 620px);
+  max-height: calc(100svh - 48px);
+  aspect-ratio: var(--modal-image-ratio, 1);
   overflow: hidden;
   border-radius: 18px;
+  background: rgba(8, 7, 8, 0.72);
   box-shadow: 0 40px 110px rgba(0, 0, 0, 0.6);
   animation: photo-modal-rise 280ms cubic-bezier(0.21, 0.47, 0.32, 0.98) both;
 }
 
 .photo-modal-img {
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .photo-modal-top {
@@ -950,6 +1101,46 @@ body > * {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes send-impact {
+  0% { transform: scale(1); }
+  28% { transform: scale(0.78, 1.16); }
+  58% { transform: scale(1.12, 0.92); }
+  100% { transform: scale(1); }
+}
+
+@keyframes send-flight {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); filter: drop-shadow(0 0 0 transparent); }
+  42% { transform: translate3d(2px, -4px, 0) rotate(-7deg); filter: drop-shadow(0 8px 10px rgba(244, 63, 107, 0.26)); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); filter: drop-shadow(0 0 0 transparent); }
+}
+
+@keyframes send-splash {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.48);
+    box-shadow:
+      0 0 0 0 rgba(228, 3, 3, 0.65),
+      0 0 0 0 rgba(255, 237, 0, 0.5),
+      0 0 0 0 rgba(36, 67, 255, 0.45);
+  }
+  70% {
+    opacity: 0.5;
+    transform: scale(1.42);
+    box-shadow:
+      -12px -9px 0 2px rgba(228, 3, 3, 0.38),
+      13px -4px 0 1px rgba(255, 237, 0, 0.34),
+      3px 13px 0 2px rgba(36, 67, 255, 0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.78);
+    box-shadow:
+      -18px -14px 0 0 transparent,
+      18px -7px 0 0 transparent,
+      4px 18px 0 0 transparent;
+  }
+}
+
 @media (max-width: 640px) {
   .force-gallery {
     height: calc(100svh - 4rem);
@@ -964,7 +1155,8 @@ body > * {
   }
 
   .gallery-board {
-    min-height: max(720px, calc(104svh - 4rem));
+    min-height: calc(100svh - 4rem);
+    padding-block: 118px 56px;
     background-size:
       auto,
       auto,
@@ -976,8 +1168,11 @@ body > * {
     background-size: 12px 12px;
   }
 
-  .board-photo {
-    width: max(118px, calc(var(--board-w) * 1.3));
+  .gallery-board-canvas {
+    width: calc(100vw - 24px);
+    grid-auto-rows: 9px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .board-photo-copy {
