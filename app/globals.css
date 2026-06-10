@@ -775,6 +775,7 @@ body > * {
   backdrop-filter: blur(10px);
   border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
   box-shadow: 0 14px 44px rgba(0, 0, 0, 0.38);
+  touch-action: manipulation;
 }
 
 .phrase-submit-label {
@@ -806,6 +807,7 @@ body > * {
   border: 0;
   background: transparent;
   box-shadow: none;
+  touch-action: manipulation;
   transition: transform 160ms ease, opacity 180ms ease;
 }
 
@@ -908,6 +910,11 @@ body > * {
 
   .phrase-submit-row {
     gap: 8px;
+  }
+
+  .phrase-submit .field-input {
+    font-size: 16px; /* Prevent mobile browsers from auto-zooming on focus. */
+    line-height: 1.25;
   }
 
   .phrase-submit-btn {
