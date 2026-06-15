@@ -8,16 +8,17 @@ const ALG = "HS256";
 
 const PARTICIPANT_COOKIE = "tp_session";
 const ADMIN_COOKIE = "tp_admin";
-const MAX_AGE = 60 * 60 * 48; // 48 hours — short-lived, scoped to the event
+const PARTICIPANT_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const ADMIN_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 export type ParticipantSession = { userId: string; email: string };
 export type AdminSession = { admin: true; email: string };
 
-async function sign(payload: Record<string, unknown>): Promise<string> {
+async function sign(payload: Record<string, unknown>, maxAge: number): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: ALG })
     .setIssuedAt()
-    .setExpirationTime(`${MAX_AGE}s`)
+    .setExpirationTime(`${maxAge}s`)
     .sign(secret);
 }
 
@@ -31,21 +32,22 @@ async function verify<T>(token: string | undefined): Promise<T | null> {
   }
 }
 
-const cookieOpts = {
+const baseCookieOpts = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
   path: "/",
-  maxAge: MAX_AGE,
 };
 
+const participantCookieOpts = { ...baseCookieOpts, maxAge: PARTICIPANT_MAX_AGE };
+
 // Admin cookie is stricter — no cross-site sending at all.
-const adminCookieOpts = { ...cookieOpts, sameSite: "strict" as const };
+const adminCookieOpts = { ...baseCookieOpts, sameSite: "strict" as const, maxAge: ADMIN_MAX_AGE };
 
 // ── Participant ────────────────────────────────────────────────
 export async function createParticipantSession(s: ParticipantSession) {
-  const token = await sign({ ...s });
-  (await cookies()).set(PARTICIPANT_COOKIE, token, cookieOpts);
+  const token = await sign({ ...s }, PARTICIPANT_MAX_AGE);
+  (await cookies()).set(PARTICIPANT_COOKIE, token, participantCookieOpts);
 }
 
 export async function getParticipantSession(): Promise<ParticipantSession | null> {
@@ -61,7 +63,7 @@ export async function clearParticipantSession() {
 
 // ── Admin ──────────────────────────────────────────────────────
 export async function createAdminSession(email: string) {
-  const token = await sign({ admin: true, email });
+  const token = await sign({ admin: true, email }, ADMIN_MAX_AGE);
   (await cookies()).set(ADMIN_COOKIE, token, adminCookieOpts);
 }
 

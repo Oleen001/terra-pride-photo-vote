@@ -45,7 +45,7 @@ export async function SiteHeader() {
           />
         </Link>
 
-        <nav className="flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav className="flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <NavLink href="/">Gallery</NavLink>
           {settings.revealResultsOpen && <NavLink href="/results">Results</NavLink>}
           <ThemeToggle />
