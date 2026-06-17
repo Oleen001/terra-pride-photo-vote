@@ -7,10 +7,12 @@ import { createOtp, verifyOtp, OtpCooldownError } from "@/lib/auth/otp";
 import { sendOtpEmail } from "@/lib/auth/email";
 import { upsertUserOnLogin } from "@/lib/auth/users";
 import { createParticipantSession, clearParticipantSession } from "@/lib/session";
+import { safeLoginNextPath } from "@/lib/auth/next-path";
 
 export type LoginState = {
   stage: "email" | "code";
   email: string;
+  next: string;
   error?: string;
 };
 
@@ -20,17 +22,18 @@ export async function loginAction(
 ): Promise<LoginState> {
   const rawEmail = String(formData.get("email") ?? "");
   const rawCode = formData.get("code");
+  const next = safeLoginNextPath(formData.get("next"));
 
   const parsedEmail = emailSchema.safeParse(rawEmail);
   if (!parsedEmail.success) {
-    return { stage: "email", email: rawEmail, error: parsedEmail.error.issues[0].message };
+    return { stage: "email", email: rawEmail, next, error: parsedEmail.error.issues[0].message };
   }
   const email = parsedEmail.data;
 
   // ── Stage 1: request OTP ──
   if (rawCode == null || String(rawCode).trim() === "") {
     if (!(await isWhitelisted(email))) {
-      return { stage: "email", email, error: "This email isn't on the guest list." };
+      return { stage: "email", email, next, error: "This email isn't on the guest list." };
     }
     const isDev = process.env.NODE_ENV !== "production";
     let code: string;
@@ -38,10 +41,10 @@ export async function loginAction(
       code = await createOtp(email);
     } catch (err) {
       if (err instanceof OtpCooldownError) {
-        return { stage: "email", email, error: "Too many requests. Please wait a moment and try again." };
+        return { stage: "email", email, next, error: "Too many requests. Please wait a moment and try again." };
       }
       console.error("createOtp failed:", err);
-      return { stage: "email", email, error: "Couldn't send the code. Please try again." };
+      return { stage: "email", email, next, error: "Couldn't send the code. Please try again." };
     }
     try {
       await sendOtpEmail(email, code);
@@ -52,29 +55,29 @@ export async function loginAction(
       if (isDev) {
         console.log(`\n  🔑 [DEV] OTP for ${email}: ${code}\n`);
       } else {
-        return { stage: "email", email, error: "Couldn't send the code. Please try again." };
+        return { stage: "email", email, next, error: "Couldn't send the code. Please try again." };
       }
     }
-    return { stage: "code", email };
+    return { stage: "code", email, next };
   }
 
   // ── Stage 2: verify OTP ──
   const parsedCode = otpCodeSchema.safeParse(String(rawCode));
   if (!parsedCode.success) {
-    return { stage: "code", email, error: parsedCode.error.issues[0].message };
+    return { stage: "code", email, next, error: parsedCode.error.issues[0].message };
   }
   if (!(await isWhitelisted(email))) {
-    return { stage: "email", email, error: "This email isn't on the guest list." };
+    return { stage: "email", email, next, error: "This email isn't on the guest list." };
   }
 
   const ok = await verifyOtp(email, parsedCode.data);
   if (!ok) {
-    return { stage: "code", email, error: "That code is incorrect or has expired." };
+    return { stage: "code", email, next, error: "That code is incorrect or has expired." };
   }
 
   const user = await upsertUserOnLogin(email);
   await createParticipantSession({ userId: user.id, email: user.email });
-  redirect("/");
+  redirect(next);
 }
 
 export async function logoutAction() {

@@ -1,12 +1,20 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { getParticipantSession } from "@/lib/session";
+import { safeLoginNextPath } from "@/lib/auth/next-path";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: "Sign in · Terra Pride" };
 
-export default async function LoginPage() {
-  if (await getParticipantSession()) redirect("/");
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
+  const { next: rawNext } = await searchParams;
+  const next = safeLoginNextPath(rawNext);
+
+  if (await getParticipantSession()) redirect(next);
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-5 py-8 sm:px-6 sm:py-12">
@@ -26,7 +34,7 @@ export default async function LoginPage() {
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">Sign in with your Terra email</p>
         </div>
-        <LoginForm />
+        <LoginForm next={next} />
       </div>
     </main>
   );

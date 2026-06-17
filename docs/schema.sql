@@ -36,6 +36,42 @@ create table if not exists public.otp_codes (
 create index if not exists idx_otp_email on public.otp_codes (email);
 create index if not exists idx_otp_expires on public.otp_codes (expires_at);
 
+-- ── magic_login_tokens ────────────────────────────────────────
+-- Reusable personal login links. Store only token hashes; plaintext tokens
+-- exist only while preparing outbound emails.
+create table if not exists public.magic_login_tokens (
+  id           uuid primary key default gen_random_uuid(),
+  email        text not null,
+  token_hash   text not null unique,
+  expires_at   timestamptz not null,
+  revoked_at   timestamptz,
+  sent_at      timestamptz,
+  last_used_at timestamptz,
+  use_count    integer not null default 0,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists idx_magic_login_tokens_email on public.magic_login_tokens (email);
+create index if not exists idx_magic_login_tokens_expires on public.magic_login_tokens (expires_at);
+create index if not exists idx_magic_login_tokens_active_email
+  on public.magic_login_tokens (email, expires_at desc)
+  where revoked_at is null;
+
+-- ── login_audit_events ────────────────────────────────────────
+create table if not exists public.login_audit_events (
+  id         uuid primary key default gen_random_uuid(),
+  email      text,
+  event      text not null,
+  status     text not null,
+  metadata   jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_login_audit_events_created on public.login_audit_events (created_at desc);
+create index if not exists idx_login_audit_events_email_created
+  on public.login_audit_events (email, created_at desc);
+create index if not exists idx_login_audit_events_event_created
+  on public.login_audit_events (event, created_at desc);
+
 -- ── photos ─────────────────────────────────────────────────────
 create table if not exists public.photos (
   id            uuid primary key default gen_random_uuid(),
@@ -89,10 +125,17 @@ create trigger trg_photos_updated
   before update on public.photos
   for each row execute function public.touch_updated_at();
 
+drop trigger if exists trg_magic_login_tokens_updated on public.magic_login_tokens;
+create trigger trg_magic_login_tokens_updated
+  before update on public.magic_login_tokens
+  for each row execute function public.touch_updated_at();
+
 -- ── Lock down: enable RLS, add no policies (service_role bypasses) ─
 alter table public.users           enable row level security;
 alter table public.whitelist_emails enable row level security;
 alter table public.otp_codes       enable row level security;
+alter table public.magic_login_tokens enable row level security;
+alter table public.login_audit_events enable row level security;
 alter table public.photos          enable row level security;
 alter table public.votes           enable row level security;
 alter table public.app_settings    enable row level security;

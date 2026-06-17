@@ -38,6 +38,22 @@ export function CloseIcon(props: IconProps) {
   );
 }
 
+export function ChevronLeftIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
 export function UploadIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

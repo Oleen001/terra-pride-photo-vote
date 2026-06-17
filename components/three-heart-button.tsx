@@ -6,10 +6,17 @@ type ThreeHeartButtonProps = {
   disabled: boolean;
   liked: boolean;
   label: string;
+  burstOnClick?: boolean;
   onClick: MouseEventHandler<HTMLButtonElement>;
 };
 
-export function ThreeHeartButton({ disabled, liked, label, onClick }: ThreeHeartButtonProps) {
+export function ThreeHeartButton({
+  disabled,
+  liked,
+  label,
+  burstOnClick = true,
+  onClick,
+}: ThreeHeartButtonProps) {
   // Self-contained heart "firework". Firing it from inside the button means the
   // burst shows everywhere the button is used (board, graph, modal) without the
   // surrounding card having to render it. The button has isolation:isolate so
@@ -21,7 +28,7 @@ export function ThreeHeartButton({ disabled, liked, label, onClick }: ThreeHeart
     (event: MouseEvent<HTMLButtonElement>) => {
       // Burst only when this tap is a *like* action (not unlike, not a disabled/
       // owner/sign-in tap) — mirrors the gallery's commitVote-only burst.
-      if (!disabled && !liked) {
+      if (burstOnClick && !disabled && !liked) {
         const key = burstKey.current++;
         setBursts((prev) => [...prev, key]);
         window.setTimeout(() => {
@@ -30,7 +37,7 @@ export function ThreeHeartButton({ disabled, liked, label, onClick }: ThreeHeart
       }
       onClick(event);
     },
-    [disabled, liked, onClick],
+    [burstOnClick, disabled, liked, onClick],
   );
 
   return (

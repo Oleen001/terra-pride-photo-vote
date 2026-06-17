@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import Image from "next/image";
 import type { GalleryPhoto } from "@/lib/photos";
-import { CloseIcon, TrashIcon } from "@/components/icons";
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, TrashIcon } from "@/components/icons";
 import { ThreeHeartButton } from "@/components/three-heart-button";
 
 type PhotoModalProps = {
@@ -15,7 +15,13 @@ type PhotoModalProps = {
   votePending: boolean;
   confirmingDelete: boolean;
   deleting: boolean;
+  hasPrevious: boolean;
+  hasNext: boolean;
+  position: number;
+  total: number;
   onClose: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
   onToggleVote: (photo: GalleryPhoto) => void;
   onRequestDelete: (photo: GalleryPhoto) => void;
   onCancelDelete: () => void;
@@ -45,7 +51,13 @@ export function PhotoModal({
   votePending,
   confirmingDelete,
   deleting,
+  hasPrevious,
+  hasNext,
+  position,
+  total,
   onClose,
+  onPrevious,
+  onNext,
   onToggleVote,
   onRequestDelete,
   onCancelDelete,
@@ -53,14 +65,27 @@ export function PhotoModal({
 }: PhotoModalProps) {
   const [imageRatio, setImageRatio] = useState<number | null>(null);
   const [imageSize, setImageSize] = useState<ModalImageSize | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (event.key === "ArrowLeft" && hasPrevious) {
+        event.preventDefault();
+        onPrevious();
+        return;
+      }
+      if (event.key === "ArrowRight" && hasNext) {
+        event.preventDefault();
+        onNext();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [hasNext, hasPrevious, onClose, onNext, onPrevious]);
 
   useEffect(() => {
     if (!imageRatio) return;
@@ -76,7 +101,34 @@ export function PhotoModal({
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     closeRef.current?.focus();
-  }, []);
+  }, [photo.id]);
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse") return;
+    pointerStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId,
+    };
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+    pointerStartRef.current = null;
+    if (!start || start.pointerId !== event.pointerId) return;
+
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    const horizontal = Math.abs(dx);
+    const vertical = Math.abs(dy);
+    if (horizontal < 60 || horizontal < vertical * 1.35) return;
+
+    if (dx < 0 && hasNext) {
+      onNext();
+    } else if (dx > 0 && hasPrevious) {
+      onPrevious();
+    }
+  };
 
   return (
     <div
@@ -96,11 +148,17 @@ export function PhotoModal({
           } as CSSProperties
         }
         onClick={(e) => e.stopPropagation()}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={() => {
+          pointerStartRef.current = null;
+        }}
       >
         <Image
           src={photo.imageUrl}
           alt={photo.caption}
           fill
+          priority
           unoptimized
           sizes="min(92vw, 980px)"
           className="photo-modal-img"
@@ -165,8 +223,9 @@ export function PhotoModal({
             <p>{photo.uploaderName}</p>
           </div>
           <ThreeHeartButton
-            disabled={!loggedIn || !votingOpen || votePending || owner}
+            disabled={loggedIn && (!votingOpen || votePending || owner)}
             liked={liked}
+            burstOnClick={loggedIn}
             label={
               !loggedIn
                 ? "Sign in to like"
@@ -179,7 +238,8 @@ export function PhotoModal({
             onClick={(e) => {
               e.stopPropagation();
               if (!loggedIn) {
-                window.location.href = "/login";
+                const next = `${window.location.pathname}${window.location.search}`;
+                window.location.href = `/login?next=${encodeURIComponent(next || "/")}`;
                 return;
               }
               if (owner || !votingOpen || votePending) return;
@@ -188,6 +248,31 @@ export function PhotoModal({
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        className="photo-modal-nav photo-modal-nav-prev"
+        aria-label={`Previous photo, ${position} of ${total}`}
+        disabled={!hasPrevious}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (hasPrevious) onPrevious();
+        }}
+      >
+        <ChevronLeftIcon width={28} height={28} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className="photo-modal-nav photo-modal-nav-next"
+        aria-label={`Next photo, ${position} of ${total}`}
+        disabled={!hasNext}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (hasNext) onNext();
+        }}
+      >
+        <ChevronRightIcon width={28} height={28} aria-hidden="true" />
+      </button>
     </div>
   );
 }

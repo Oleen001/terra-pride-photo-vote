@@ -1098,6 +1098,56 @@ body > * {
   height: 52px;
 }
 
+.photo-modal-nav {
+  position: fixed;
+  top: 50%;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transform: translateY(-50%);
+  transition:
+    background 180ms ease-out,
+    border-color 180ms ease-out,
+    opacity 180ms ease-out,
+    transform 180ms ease-out;
+}
+
+.photo-modal-nav:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.photo-modal-nav:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.photo-modal-nav:disabled {
+  cursor: default;
+  opacity: 0.22;
+}
+
+.photo-modal-nav-prev {
+  left: max(24px, calc((100vw - min(92vw, 980px)) / 2 - 84px));
+}
+
+.photo-modal-nav-next {
+  right: max(24px, calc((100vw - min(92vw, 980px)) / 2 - 84px));
+}
+
+@media (max-width: 767px) {
+  .photo-modal-nav {
+    display: none;
+  }
+}
+
 @keyframes photo-modal-fade {
   from { opacity: 0; }
   to { opacity: 1; }

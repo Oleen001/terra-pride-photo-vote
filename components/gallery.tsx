@@ -30,6 +30,11 @@ type GalleryProps = {
 
 const masonrySpans = [10, 13, 9, 12, 15, 11, 14, 10, 12, 16, 9, 13];
 
+function goToLogin() {
+  const next = `${window.location.pathname}${window.location.search}`;
+  window.location.href = `/login?next=${encodeURIComponent(next || "/")}`;
+}
+
 function pickAmbientZoomIds(photos: GalleryPhoto[], count: number): Set<string> {
   if (photos.length <= count) return new Set(photos.map((photo) => photo.id));
 
@@ -134,6 +139,31 @@ export function Gallery({
     () => photos.find((photo) => photo.id === selectedId) ?? null,
     [photos, selectedId],
   );
+  const selectedIndex = useMemo(
+    () => photos.findIndex((photo) => photo.id === selectedId),
+    [photos, selectedId],
+  );
+  const selectedPosition = selectedIndex >= 0 ? selectedIndex + 1 : 0;
+  const hasPreviousPhoto = selectedIndex > 0;
+  const hasNextPhoto = selectedIndex >= 0 && selectedIndex < photos.length - 1;
+
+  const selectPreviousPhoto = useCallback(() => {
+    setConfirmDeleteId(null);
+    setSelectedId((current) => {
+      const index = photos.findIndex((photo) => photo.id === current);
+      if (index <= 0) return current;
+      return photos[index - 1]?.id ?? current;
+    });
+  }, [photos]);
+
+  const selectNextPhoto = useCallback(() => {
+    setConfirmDeleteId(null);
+    setSelectedId((current) => {
+      const index = photos.findIndex((photo) => photo.id === current);
+      if (index < 0 || index >= photos.length - 1) return current;
+      return photos[index + 1]?.id ?? current;
+    });
+  }, [photos]);
 
   const isOwner = useCallback(
     (photo: GalleryPhoto) => currentUserId !== null && photo.ownerUserId === currentUserId,
@@ -412,8 +442,9 @@ export function Gallery({
                 </div>
                 <div className="board-like-slot">
                   <ThreeHeartButton
-                    disabled={!loggedIn || !votingOpen || pendingIds.has(photo.id) || owner}
+                    disabled={loggedIn && (!votingOpen || pendingIds.has(photo.id) || owner)}
                     liked={voted}
+                    burstOnClick={loggedIn}
                     label={
                       !loggedIn
                         ? "Sign in"
@@ -426,7 +457,7 @@ export function Gallery({
                     onClick={(event) => {
                       event.stopPropagation();
                       if (!loggedIn) {
-                        window.location.href = "/login";
+                        goToLogin();
                         return;
                       }
                       if (owner || !votingOpen || pendingIds.has(photo.id)) return;
@@ -448,6 +479,7 @@ export function Gallery({
 
       {selectedPhoto && (
         <PhotoModal
+          key={selectedPhoto.id}
           photo={selectedPhoto}
           liked={isOwner(selectedPhoto) || votedIds.has(selectedPhoto.id)}
           owner={isOwner(selectedPhoto)}
@@ -457,7 +489,17 @@ export function Gallery({
           confirmingDelete={confirmDeleteId === selectedPhoto.id}
           deleting={deletingId === selectedPhoto.id}
           onClose={() => selectPhoto(null)}
+          hasPrevious={hasPreviousPhoto}
+          hasNext={hasNextPhoto}
+          position={selectedPosition}
+          total={photos.length}
+          onPrevious={selectPreviousPhoto}
+          onNext={selectNextPhoto}
           onToggleVote={(p) => {
+            if (!loggedIn) {
+              goToLogin();
+              return;
+            }
             if (votedIds.has(p.id)) commitUnvote(p);
             else commitVote(p);
           }}

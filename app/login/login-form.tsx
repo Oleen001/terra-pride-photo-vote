@@ -5,8 +5,6 @@ import { useFormStatus } from "react-dom";
 import { loginAction, type LoginState } from "./actions";
 import { BurstInput } from "@/components/burst-input";
 
-const initialState: LoginState = { stage: "email", email: "" };
-
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
@@ -16,12 +14,14 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-export function LoginForm() {
+export function LoginForm({ next = "/" }: { next?: string }) {
+  const initialState: LoginState = { stage: "email", email: "", next };
   const [state, formAction] = useActionState(loginAction, initialState);
   const onCodeStage = state.stage === "code";
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <input type="hidden" name="next" value={state.next} />
       <div className="flex flex-col gap-2">
         <label htmlFor="email" className="text-sm font-medium text-foreground">
           Email
