@@ -2,8 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { getParticipantSession } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
-import { logoutAction } from "@/app/login/actions";
 import { UploadIcon } from "@/components/icons";
+import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export async function SiteHeader() {
@@ -64,14 +64,7 @@ export async function SiteHeader() {
               <span className="ml-2 hidden max-w-[160px] truncate text-xs text-muted sm:inline">
                 {session.email}
               </span>
-              <form action={logoutAction}>
-                <button
-                  type="submit"
-                  className="ml-1 inline-flex h-9 cursor-pointer items-center rounded-[8px] px-3 text-[13px] font-medium text-muted transition-colors duration-200 hover:bg-foreground/6 hover:text-foreground"
-                >
-                  Logout
-                </button>
-              </form>
+              <LogoutButton email={session.email} />
             </>
           ) : (
             <Link

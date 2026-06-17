@@ -4,7 +4,7 @@ export function safeLoginNextPath(value: FormDataEntryValue | string | string[] 
   if (!next.startsWith("/") || next.startsWith("//")) return "/";
 
   const [pathname] = next.split(/[?#]/);
-  if (pathname === "/login" || pathname === "/admin/login") return "/";
+  if (pathname === "/login" || pathname === "/login/success" || pathname === "/admin/login") return "/";
 
   return next;
 }

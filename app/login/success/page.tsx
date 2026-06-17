@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import { getParticipantSession } from "@/lib/session";
 import { safeLoginNextPath } from "@/lib/auth/next-path";
-import { LoginForm } from "./login-form";
+import { LoginSuccessCountdown } from "./countdown";
 
-export const metadata = { title: "Sign in · Terra Pride" };
+export const metadata = { title: "Signed in · Terra Pride" };
 
-export default async function LoginPage({
+export default async function LoginSuccessPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string | string[] }>;
@@ -14,9 +14,8 @@ export default async function LoginPage({
   const { next: rawNext } = await searchParams;
   const next = safeLoginNextPath(rawNext);
 
-  if (await getParticipantSession()) {
-    redirect(`/login/success?next=${encodeURIComponent(next)}`);
-  }
+  const session = await getParticipantSession();
+  if (!session) redirect(`/login?next=${encodeURIComponent(next)}`);
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-5 py-8 sm:px-6 sm:py-12">
@@ -42,11 +41,15 @@ export default async function LoginPage({
             className="mb-6 hidden h-11 w-auto dark:block"
           />
           <h1 className="login-title text-2xl text-foreground sm:text-[1.75rem]">
-            Celebrate with us!
+            Signed in
           </h1>
-          <p className="mt-2 text-sm leading-6 text-muted">Sign in with your Terra email</p>
+          <p className="mt-2 text-sm leading-6 text-muted">Signed in as</p>
+          <p className="mt-1 max-w-full break-words text-sm font-semibold text-foreground">
+            {session.email}
+          </p>
         </div>
-        <LoginForm next={next} />
+
+        <LoginSuccessCountdown next={next} />
       </div>
     </main>
   );

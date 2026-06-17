@@ -3,9 +3,11 @@ import { verifyMagicLoginToken } from "@/lib/auth/magic-link";
 import { upsertUserOnLogin } from "@/lib/auth/users";
 import { createParticipantSession } from "@/lib/session";
 import { logLoginAudit } from "@/lib/auth/login-audit";
+import { safeLoginNextPath } from "@/lib/auth/next-path";
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
+  const next = safeLoginNextPath(request.nextUrl.searchParams.get("next"));
   const result = await verifyMagicLoginToken(token);
 
   if (!result.ok) {
@@ -34,6 +36,7 @@ export async function GET(request: NextRequest) {
     metadata: { method: "magic_link" },
   });
 
-  const homeUrl = new URL("/", request.url);
-  return NextResponse.redirect(homeUrl);
+  const successUrl = new URL("/login/success", request.url);
+  successUrl.searchParams.set("next", next);
+  return NextResponse.redirect(successUrl);
 }
