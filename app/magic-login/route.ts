@@ -5,6 +5,27 @@ import { createParticipantSession } from "@/lib/session";
 import { logLoginAudit } from "@/lib/auth/login-audit";
 import { safeLoginNextPath } from "@/lib/auth/next-path";
 
+function isLocalhost(host: string): boolean {
+  return host.startsWith("localhost") || host.startsWith("127.0.0.1") || host === "::1";
+}
+
+function publicUrl(request: NextRequest, pathname: string): URL {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configuredSiteUrl) {
+    const configured = new URL(configuredSiteUrl);
+    if (!isLocalhost(configured.hostname)) return new URL(pathname, configured);
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  if (forwardedHost && !isLocalhost(forwardedHost)) {
+    const forwardedProto =
+      request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https";
+    return new URL(pathname, `${forwardedProto}://${forwardedHost}`);
+  }
+
+  return new URL(pathname, request.nextUrl.origin);
+}
+
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
   const next = safeLoginNextPath(request.nextUrl.searchParams.get("next"));
@@ -17,7 +38,7 @@ export async function GET(request: NextRequest) {
       metadata: { reason: result.reason },
     });
 
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = publicUrl(request, "/login");
     loginUrl.searchParams.set("magic", result.reason);
     return NextResponse.redirect(loginUrl);
   }
@@ -36,7 +57,7 @@ export async function GET(request: NextRequest) {
     metadata: { method: "magic_link" },
   });
 
-  const successUrl = new URL("/login/success", request.url);
+  const successUrl = publicUrl(request, "/login/success");
   successUrl.searchParams.set("next", next);
   return NextResponse.redirect(successUrl);
 }
