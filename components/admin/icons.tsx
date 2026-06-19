@@ -68,6 +68,16 @@ export function VoteIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function QuizIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M8 9h8" />
+      <path d="M8 13h5" />
+      <path d="M7 3h10a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4h-3.5L9 21v-4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Z" />
+    </Icon>
+  );
+}
+
 export function MailIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

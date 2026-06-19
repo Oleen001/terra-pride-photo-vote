@@ -13,6 +13,8 @@ export async function SiteHeader() {
       uploadOpen: false,
       votingOpen: false,
       revealResultsOpen: false,
+      quizOpen: false,
+      activeQuizSetId: null,
     })),
   ]);
 
@@ -47,6 +49,7 @@ export async function SiteHeader() {
 
         <nav className="flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <NavLink href="/">Gallery</NavLink>
+          <NavLink href="/quiz">Quiz</NavLink>
           {settings.revealResultsOpen && <NavLink href="/results">Results</NavLink>}
           <ThemeToggle />
 

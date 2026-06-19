@@ -10,6 +10,8 @@ export default async function ResultsPage() {
     uploadOpen: false,
     votingOpen: false,
     revealResultsOpen: false,
+    quizOpen: false,
+    activeQuizSetId: null,
   }));
 
   const photos = settings.revealResultsOpen ? await getTopPhotos(10) : [];

@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { GridIcon, ImageIcon, MailIcon, MailLogIcon, SettingsIcon, TypeIcon } from "./icons";
+import {
+  GridIcon,
+  ImageIcon,
+  MailIcon,
+  MailLogIcon,
+  QuizIcon,
+  SettingsIcon,
+  TypeIcon,
+} from "./icons";
 
 type NavItem = {
   href: string;
@@ -14,6 +22,7 @@ type NavItem = {
 const items: NavItem[] = [
   { href: "/admin", label: "Overview", icon: <GridIcon /> },
   { href: "/admin/photos", label: "Photos", icon: <ImageIcon /> },
+  { href: "/admin/quiz", label: "Quiz", icon: <QuizIcon /> },
   { href: "/admin/whitelist", label: "Whitelist", icon: <MailIcon /> },
   { href: "/admin/phrases", label: "Phrases", icon: <TypeIcon /> },
   { href: "/admin/logs", label: "Email logs", icon: <MailLogIcon /> },

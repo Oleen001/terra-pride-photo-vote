@@ -35,6 +35,12 @@ export default async function AdminSettingsPage() {
           warning="Heads up: turning this on makes the Top 10 and vote counts public immediately."
           initial={settings.revealResultsOpen}
         />
+        <SettingsToggle
+          settingKey="quizOpen"
+          label="Open quiz entry"
+          description="When on, signed-in participants can enter the quiz waiting room."
+          initial={settings.quizOpen}
+        />
       </div>
     </div>
   );

@@ -106,7 +106,7 @@ export const metadata: Metadata = {
 const themeInitScript = `
 try {
   var theme = localStorage.getItem("theme");
-  if (theme === "dark") {
+  if (theme !== "light") {
     document.documentElement.classList.add("dark");
     document.documentElement.style.colorScheme = "dark";
   } else {

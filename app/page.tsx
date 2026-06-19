@@ -16,6 +16,8 @@ export default async function Home() {
       uploadOpen: false,
       votingOpen: false,
       revealResultsOpen: false,
+      quizOpen: false,
+      activeQuizSetId: null,
     })),
     session ? getVotedPhotoIds(session.userId) : Promise.resolve<string[]>([]),
     listPhrases().catch(() => [] as string[]),

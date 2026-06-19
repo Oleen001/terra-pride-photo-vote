@@ -28,6 +28,8 @@ const settingsSchema = z
     uploadOpen: z.boolean().optional(),
     votingOpen: z.boolean().optional(),
     revealResultsOpen: z.boolean().optional(),
+    quizOpen: z.boolean().optional(),
+    activeQuizSetId: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, "Nothing to update.");
 
@@ -46,6 +48,7 @@ export async function updateSettingsAction(
   revalidatePath("/admin/settings");
   revalidatePath("/admin");
   revalidatePath("/");
+  revalidatePath("/quiz");
   return { ok: true };
 }
 

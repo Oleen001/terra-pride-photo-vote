@@ -5,6 +5,8 @@ export type AppSettings = {
   uploadOpen: boolean;
   votingOpen: boolean;
   revealResultsOpen: boolean;
+  quizOpen: boolean;
+  activeQuizSetId: string | null;
 };
 
 /** Read the singleton settings row (id = 1). */
@@ -12,7 +14,7 @@ export async function getSettings(): Promise<AppSettings> {
   const db = supabaseAdmin();
   const { data, error } = await db
     .from("app_settings")
-    .select("upload_open, voting_open, reveal_results_open")
+    .select("*")
     .eq("id", 1)
     .single();
   if (error) throw error;
@@ -21,11 +23,15 @@ export async function getSettings(): Promise<AppSettings> {
     upload_open: boolean;
     voting_open: boolean;
     reveal_results_open: boolean;
+    quiz_open?: boolean;
+    active_quiz_set_id?: string | null;
   };
   return {
     uploadOpen: row.upload_open,
     votingOpen: row.voting_open,
     revealResultsOpen: row.reveal_results_open,
+    quizOpen: row.quiz_open ?? false,
+    activeQuizSetId: row.active_quiz_set_id ?? null,
   };
 }
 
@@ -34,19 +40,22 @@ export async function updateSettings(
   partial: Partial<AppSettings>,
 ): Promise<AppSettings> {
   const db = supabaseAdmin();
-  const patch: Record<string, boolean | string> = {
+  const patch: Record<string, boolean | string | null> = {
     updated_at: new Date().toISOString(),
   };
   if (partial.uploadOpen !== undefined) patch.upload_open = partial.uploadOpen;
   if (partial.votingOpen !== undefined) patch.voting_open = partial.votingOpen;
   if (partial.revealResultsOpen !== undefined)
     patch.reveal_results_open = partial.revealResultsOpen;
+  if (partial.quizOpen !== undefined) patch.quiz_open = partial.quizOpen;
+  if (partial.activeQuizSetId !== undefined)
+    patch.active_quiz_set_id = partial.activeQuizSetId;
 
   const { data, error } = await db
     .from("app_settings")
     .update(patch)
     .eq("id", 1)
-    .select("upload_open, voting_open, reveal_results_open")
+    .select("*")
     .single();
   if (error) throw error;
 
@@ -54,10 +63,14 @@ export async function updateSettings(
     upload_open: boolean;
     voting_open: boolean;
     reveal_results_open: boolean;
+    quiz_open?: boolean;
+    active_quiz_set_id?: string | null;
   };
   return {
     uploadOpen: row.upload_open,
     votingOpen: row.voting_open,
     revealResultsOpen: row.reveal_results_open,
+    quizOpen: row.quiz_open ?? false,
+    activeQuizSetId: row.active_quiz_set_id ?? null,
   };
 }

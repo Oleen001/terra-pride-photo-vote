@@ -7,8 +7,8 @@ type Theme = "light" | "dark";
 const THEME_CHANGE_EVENT = "terra-theme-change";
 
 function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  return window.localStorage.getItem("theme") === "dark" ? "dark" : "light";
+  if (typeof window === "undefined") return "dark";
+  return window.localStorage.getItem("theme") === "light" ? "light" : "dark";
 }
 
 function applyTheme(theme: Theme) {
@@ -30,7 +30,7 @@ function getThemeSnapshot(): Theme {
 }
 
 function getServerThemeSnapshot(): Theme {
-  return "light";
+  return "dark";
 }
 
 export function ThemeToggle() {
