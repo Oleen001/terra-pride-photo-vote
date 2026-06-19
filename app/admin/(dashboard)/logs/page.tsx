@@ -34,7 +34,7 @@ export default async function AdminEmailLogsPage({
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Email logs</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Check whether OTP emails went out when a participant says they didn&apos;t receive one.
+          Review legacy login email delivery attempts and recipient activity.
         </p>
       </header>
 
@@ -83,7 +83,7 @@ export default async function AdminEmailLogsPage({
             <p className="text-xs text-zinc-400 dark:text-zinc-500">
               {query
                 ? "Try checking the email spelling, or clear the search to see everything."
-                : "Logs will appear here once the system starts sending OTP emails."}
+                : "Logs will appear here when the system records email delivery activity."}
             </p>
           </div>
         ) : (

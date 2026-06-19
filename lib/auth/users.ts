@@ -11,7 +11,7 @@ export type UserRow = {
 
 /**
  * Find or create the user for this email, and stamp last_login_at.
- * Called only after a successful OTP verification.
+ * Called only after the login flow has authorized the email.
  */
 export async function upsertUserOnLogin(email: string): Promise<UserRow> {
   const db = supabaseAdmin();

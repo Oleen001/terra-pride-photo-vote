@@ -170,7 +170,7 @@ body > * {
      border-box gradient. At rest the border-box gradient is the neutral --line
      color so the field looks plain; on hover/focus it becomes the pride
      rainbow. Every participant-facing input/textarea/select that uses
-     .field-input gets this automatically (login email, OTP, upload caption,
+     .field-input gets this automatically (login email, upload caption,
      and any future field). Works on <textarea> too since it's all box styling.
      Admin pages opt out by not using .field-input. */
   background:
@@ -192,7 +192,7 @@ body > * {
 
 /* Rainbow border on hover (subtle) and full rainbow + glow on focus/typing —
    identical to the login email reference. :not(:read-only) keeps read-only
-   fields (e.g. the locked email at the OTP stage) looking inert. */
+   fields looking inert. */
 .field-input:hover:not(:read-only):not(:disabled) {
   background:
     linear-gradient(var(--background), var(--background)) padding-box,
